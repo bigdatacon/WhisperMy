@@ -45,6 +45,18 @@ int main() {
         return 1;
     }
 
+    // Создаем поток для чтения ввода с клавиатуры и отправки на сервер
+    std::thread input_thread([&]() {
+        std::string input;
+        while (true) {
+            std::getline(std::cin, input);
+
+            // Отправляем введенный текст на сервер
+            echo_client.send(con->get_handle(), input, websocketpp::frame::opcode::text);
+        }
+    });
+
+
     // Connect to the server
     echo_client.connect(con);
 
