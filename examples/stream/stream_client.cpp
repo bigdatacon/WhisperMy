@@ -2,6 +2,14 @@
 #include <websocketpp/config/asio_no_tls_client.hpp>
 #include <websocketpp/client.hpp>
 
+// так тоже можн поднять сервер
+//g++ -o stream_server -std=c++11 stream_server.cpp -I./websocketpp -lboost_system -lpthread
+//g++ -o stream_client -std=c++11 stream_client.cpp -I./websocketpp -lboost_system -lpthread
+//./stream_client
+//./stream_server
+
+//https://echo.websocket.org/.ws
+
 int main() {
     using websocketpp::lib::placeholders::_1;
     using websocketpp::lib::placeholders::_2;
@@ -15,11 +23,18 @@ int main() {
 
     // Initialize the client
     echo_client.init_asio();
+    std::cout << "START CLIENT" << std::endl;
 
     // Register our message handler
     echo_client.set_message_handler(bind([&](websocketpp::connection_hdl hdl, client::message_ptr msg) {
         std::cout << "Received Message: " << msg->get_payload() << std::endl;
     }, _1, _2));
+
+    // Отправить сообщение на сервер после успешного подключения
+    echo_client.set_open_handler([&](websocketpp::connection_hdl hdl) {
+        std::string message = "Hello, server 444444444!";
+        echo_client.send(hdl, message, websocketpp::frame::opcode::text);
+    });
 
     // Get a connection to the desired server
     websocketpp::lib::error_code ec;
@@ -35,6 +50,9 @@ int main() {
 
     // Run the client
     echo_client.run();
+
+
+
 
     return 0;
 }
