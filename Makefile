@@ -375,6 +375,9 @@ server: examples/server/server.cpp $(SRC_COMMON) $(WHISPER_OBJ)
 stream: examples/stream/stream.cpp $(SRC_COMMON) $(SRC_COMMON_SDL) $(WHISPER_OBJ)
 	$(CXX) $(CXXFLAGS) examples/stream/stream.cpp $(SRC_COMMON) $(SRC_COMMON_SDL) $(WHISPER_OBJ) -o stream $(CC_SDL) $(LDFLAGS)
 
+stream_client_f: examples/stream/stream_client_f.cpp $(SRC_COMMON) $(SRC_COMMON_SDL) $(WHISPER_OBJ)
+	$(CXX) $(CXXFLAGS) examples/stream/stream_client_f.cpp $(SRC_COMMON) $(SRC_COMMON_SDL) $(WHISPER_OBJ) -o stream_client_f $(CC_SDL) $(LDFLAGS)
+
 wav_reader: examples/stream/wav_reader.cpp $(SRC_COMMON) $(SRC_COMMON_SDL) $(WHISPER_OBJ)
 	$(CXX) $(CXXFLAGS) examples/stream/wav_reader.cpp $(SRC_COMMON) $(SRC_COMMON_SDL) $(WHISPER_OBJ) -o wav_reader $(CC_SDL) $(LDFLAGS)
 
