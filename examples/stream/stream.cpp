@@ -13,6 +13,7 @@
 #include <thread>
 #include <vector>
 #include <fstream>
+#include <iostream>
 
 
 //  500 -> 00:05.000
@@ -128,7 +129,7 @@ void whisper_print_usage(int /*argc*/, char ** argv, const whisper_params & para
 }
 
 int main(int argc, char ** argv) {
-
+    std::ofstream outFile("samples/myfile.txt");
     std::cout << "HA HA " << std::endl;
     whisper_params params;
 
@@ -365,13 +366,14 @@ int main(int argc, char ** argv) {
                     const char * text = whisper_full_get_segment_text(ctx, i);
 
                     // Открытие файла для записи
-                    std::ofstream outFile("samples/myfile.txt");
+                    //
 
                     // Запись распознанного текста в файл
+                    std::cout << "Распознанный текст: " << text <<std::endl;
                     outFile << "Распознанный текст: " << text << std::endl;
 
                     // Закрытие файла
-                    outFile.close();
+                    //
 
 
 
@@ -442,6 +444,6 @@ int main(int argc, char ** argv) {
 
     whisper_print_timings(ctx);
     whisper_free(ctx);
-
+    outFile.close();
     return 0;
 }
