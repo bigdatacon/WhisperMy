@@ -6,24 +6,27 @@
 //g++ -o wav_reader wav_reader.cpp -lsndfile
 //./wav_reader
 
-
-
 void recognizeSpeech(const std::vector<float>& audioData, const std::string& languageModelPath) {
     // Инициализация Whisper
     whisper_context* ctx = whisper_init_from_file(languageModelPath.c_str());
 
+    /*
     // Передача аудио-байтов для распознавания речи
     if (whisper_add_audio(ctx, audioData.data(), audioData.size()) != 0) {
         std::cerr << "Error adding audio data to Whisper context." << std::endl;
         whisper_free(ctx);
         return;
     }
+    */
 
     // Получение результата распознавания
-    char* result = whisper_get_text(ctx);
+    int n_segments = whisper_full_n_segments(ctx);
 
-    // Вывод распознанного текста на печать
-    std::cout << "Распознанный текст: " << result << std::endl;
+    for (int i = 0; i < n_segments; ++i) {
+        const char* text = whisper_full_get_segment_text(ctx, i);
+        // Вывод распознанного текста на печать
+        std::cout << "Распознанный текст сегмента " << i << ": " << text << std::endl;
+    }
 
     // Освобождение ресурсов
     whisper_free(ctx);
@@ -47,8 +50,7 @@ int main() {
     sf_close(sndFile);
 
     // Путь к файлу с моделью языка Whisper
-    //std::string languageModelPath = "path/to/whisper/language_model.bin";
-    std::string languageModelPath     = "models/ggml-base.en.bin"; // это путь в файле stream.cpp
+    std::string languageModelPath = "models/ggml-base.en.bin"; // это путь в файле stream.cpp
 
     // Распознавание речи
     recognizeSpeech(audioData, languageModelPath);
