@@ -2,6 +2,7 @@
 //
 // A very quick-n-dirty implementation serving mainly as a proof of concept.
 //
+#include <fstream>
 #include "common-sdl.h"
 #include "common.h"
 #include "whisper.h"
@@ -360,6 +361,17 @@ int main(int argc, char ** argv) {
                 const int n_segments = whisper_full_n_segments(ctx);
                 for (int i = 0; i < n_segments; ++i) {
                     const char * text = whisper_full_get_segment_text(ctx, i);
+
+                    // Открытие файла для записи
+                    std::ofstream outFile("samples/myfile.txt");
+
+                    // Запись распознанного текста в файл
+                    outFile << "Распознанный текст: " << text << std::endl;
+
+                    // Закрытие файла
+                    outFile.close();
+
+
 
                     if (params.no_timestamps) {
                         printf("%s", text);
