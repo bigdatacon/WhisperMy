@@ -5,6 +5,12 @@
 #include <streambuf>
 #include <filesystem>
 
+// так тоже можн поднять сервер
+//g++ -o stream_server -std=c++11 stream_server.cpp -I./websocketpp -lboost_system -lpthread
+//g++ -o stream_client -std=c++11 stream_client.cpp -I./websocketpp -lboost_system -lpthread
+//./stream_client
+//./stream_server
+
 int main() {
     using websocketpp::lib::placeholders::_1;
     using websocketpp::lib::placeholders::_2;
