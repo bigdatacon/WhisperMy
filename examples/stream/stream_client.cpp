@@ -3,14 +3,7 @@
 #include <websocketpp/client.hpp>
 #include <fstream>
 #include <streambuf>
-
-// так тоже можн поднять сервер
-//g++ -o stream_server -std=c++11 stream_server.cpp -I./websocketpp -lboost_system -lpthread
-//g++ -o stream_client -std=c++11 stream_client.cpp -I./websocketpp -lboost_system -lpthread
-//./stream_client
-//./stream_server
-
-//https://echo.websocket.org/.ws
+#include <filesystem>
 
 int main() {
     using websocketpp::lib::placeholders::_1;
@@ -33,63 +26,72 @@ int main() {
     }, _1, _2));
 
     std::ifstream myfile("myfile2.txt");
-    if (myfile.is_open()) {
-        // Читаем и выводим содержимое файла в консоль
-        std::cout << "File content:\n";
-        std::cout << std::string((std::istreambuf_iterator<char>(myfile)), std::istreambuf_iterator<char>()) << std::endl;
-
-        // Закрываем файл
-        myfile.close();
-    } else {
-        std::cerr << "Error opening myfile2.txt" << std::endl;
-    }
 
 
-    // Отправить сообщение на сервер после успешного подключения
-    echo_client.set_open_handler([&](websocketpp::connection_hdl hdl) {
-        std::string message = "Hello, server 444444444!";
+    // Variable to store the previous content of the file
+    static std::string previous_file_content;
+
+    // Define a function to send changes to the server
+    auto send_changes_to_server = [&](websocketpp::connection_hdl hdl) {
+        std::cout << "2 LOOP: " << std::endl;
         std::ifstream myfile("myfile2.txt");
-        std::string message_2((std::istreambuf_iterator<char>(myfile)), std::istreambuf_iterator<char>());
-        std::cout <<"MESSAGE 2 : " << message_2 << std::endl;
-        // Закрываем файл
-        myfile.close();
+        if (myfile.is_open()) {
+            std::cout << "3 LOOP: " << std::endl;
+            // Read the content of the file
+            std::string current_file_content((std::istreambuf_iterator<char>(myfile)), std::istreambuf_iterator<char>());
+            myfile.close();
 
-        echo_client.send(hdl, message_2, websocketpp::frame::opcode::text);
-        //echo_client.send(hdl, message_2, websocketpp::frame::opcode::text, websocketpp::frame::flag::utf8);
-        //echo_client.send(hdl, message_2, websocketpp::frame::opcode::text, websocketpp::frame::flag::TEXT);
+            // Find differences relative to the previous content
+            std::size_t pos = previous_file_content.size();
+            std::string changes = current_file_content.substr(pos);
 
+            // Send changes to the server
+            if (!changes.empty()) {
+                echo_client.send(hdl, changes, websocketpp::frame::opcode::text);
+                std::cout << "Sent changes to server." << std::endl;
+            } else {
+                std::cout << "No changes to send." << std::endl;
+            }
 
+            // Update the previous content
+            previous_file_content = current_file_content;
+        } else {
+            std::cerr << "Error opening myfile2.txt" << std::endl;
+        }
+    };
+
+    // Send a message to the server after successful connection
+    echo_client.set_open_handler([&](websocketpp::connection_hdl hdl) {
+        std::cout << "Connected to the server" << std::endl;
+
+        // Send changes to the server
+        send_changes_to_server(hdl);
     });
 
     // Get a connection to the desired server
     websocketpp::lib::error_code ec;
-    client::connection_ptr con = echo_client.get_connection("ws://localhost:9002", ec);
+    auto con = echo_client.get_connection("ws://localhost:9002", ec);
 
     if (ec) {
         std::cout << "Could not create connection because: " << ec.message() << std::endl;
         return 1;
     }
 
-    // Создаем поток для чтения ввода с клавиатуры и отправки на сервер
-    std::thread input_thread([&]() {
-        std::string input;
-        while (true) {
-            std::getline(std::cin, input);
-
-            // Отправляем введенный текст на сервер
-            echo_client.send(con->get_handle(), input, websocketpp::frame::opcode::text);
-        }
-    });
-
-
-    // Connect to the server
-    echo_client.connect(con);
-
     // Run the client
+    echo_client.connect(con);
+    std::cout << "SET CONNECTION to server and go to LOOP: " << std::endl;
+    // Start a loop to check for changes in the file and send them to the server
+    while (true) {
+        // Wait for 15 seconds
+        std::this_thread::sleep_for(std::chrono::seconds(3));
+        std::cout << "1 LOOP: " << std::endl;
+        // Check the file and send changes to the server
+        echo_client.get_io_service().post([con, &send_changes_to_server]() {
+            send_changes_to_server(con);
+        });
+    }
+
     echo_client.run();
-
-
-
 
     return 0;
 }
