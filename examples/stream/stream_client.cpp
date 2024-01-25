@@ -42,8 +42,13 @@ void send_changes_to_server(ws::connection_hdl hdl) {
         // Send changes to the server
         if (!changes.empty()) {
             std::cout << "6 LOOP: " << std::endl;
-            echo_client.send(hdl, changes, ws::frame::opcode::text);
-            std::cout << "Sent changes to server." << std::endl;
+            try {
+                echo_client.send(hdl, changes, ws::frame::opcode::text);
+                std::cout << "Sent changes to server." << std::endl;
+            } catch (const websocketpp::exception& e) {
+                std::cerr << "WebSocket++ Exception: " << e.what() << std::endl;
+            }
+
         } else {
             std::cout << "No changes to send." << std::endl;
         }
