@@ -372,11 +372,11 @@ quantize: examples/quantize/quantize.cpp $(WHISPER_OBJ) $(SRC_COMMON)
 server: examples/server/server.cpp $(SRC_COMMON) $(WHISPER_OBJ)
 	$(CXX) $(CXXFLAGS) examples/server/server.cpp $(SRC_COMMON) $(WHISPER_OBJ) -o server $(LDFLAGS) $(LWINSOCK2)
 
-stream_server: examples/server/stream_server.cpp $(SRC_COMMON) $(WHISPER_OBJ)
-	$(CXX) $(CXXFLAGS) examples/server/stream_server.cpp $(SRC_COMMON) $(WHISPER_OBJ) -o stream_server $(LDFLAGS) $(LWINSOCK2)
+stream_server: examples/stream/stream_server.cpp $(SRC_COMMON) $(SRC_COMMON_SDL) $(WHISPER_OBJ)
+	$(CXX) $(CXXFLAGS) examples/stream/stream_server.cpp $(SRC_COMMON) $(SRC_COMMON_SDL) $(WHISPER_OBJ) -o stream $(CC_SDL) $(LDFLAGS)
 
-stream_server_f: examples/server/stream_server_f.cpp $(SRC_COMMON) $(WHISPER_OBJ)
-	$(CXX) $(CXXFLAGS) examples/server/stream_server_f.cpp $(SRC_COMMON) $(WHISPER_OBJ) -o stream_server_f $(LDFLAGS) $(LWINSOCK2)
+stream_server_f: examples/stream/stream_server_f.cpp $(SRC_COMMON) $(SRC_COMMON_SDL) $(WHISPER_OBJ)
+	$(CXX) $(CXXFLAGS) examples/stream/stream_server_f.cpp $(SRC_COMMON) $(SRC_COMMON_SDL) $(WHISPER_OBJ) -o stream $(CC_SDL) $(LDFLAGS)
 
 stream: examples/stream/stream.cpp $(SRC_COMMON) $(SRC_COMMON_SDL) $(WHISPER_OBJ)
 	$(CXX) $(CXXFLAGS) examples/stream/stream.cpp $(SRC_COMMON) $(SRC_COMMON_SDL) $(WHISPER_OBJ) -o stream $(CC_SDL) $(LDFLAGS)
