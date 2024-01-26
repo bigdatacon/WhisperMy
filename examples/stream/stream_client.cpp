@@ -5,6 +5,7 @@
 #include <thread>
 #include <atomic>
 
+
 typedef websocketpp::client<websocketpp::config::asio_client> client;
 
 void on_message(websocketpp::connection_hdl hdl, client::message_ptr msg) {
@@ -20,6 +21,8 @@ bool is_connection_open(client& echo_client, websocketpp::connection_hdl hdl) {
 bool file_content_changed(const std::string& current_data, const std::string& previous_data) {
     return current_data != previous_data;
 }
+
+
 
 std::string previous_data;
 std::atomic<bool> ready(false);
@@ -39,8 +42,9 @@ void send_data_thread(client& echo_client, websocketpp::connection_hdl hdl) {
         std::cout << "msg: " << message << std::endl;
 
         if (file_content_changed(message, previous_data)) {
-            std::cout << "Sending data: " << message << std::endl;
-            echo_client.send(hdl, message, websocketpp::frame::opcode::text);
+            std::string diff = message.substr(previous_data.length());
+            std::cout << "Sending data DIFF: " << diff<< std::endl;
+            echo_client.send(hdl, diff, websocketpp::frame::opcode::text);
             previous_data = message;
         }
         std::cout << "DID SEND DATA" << std::endl;
