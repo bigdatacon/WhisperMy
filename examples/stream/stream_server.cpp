@@ -39,7 +39,12 @@ int main() {
     echo_server.init_asio();
     echo_server.listen(9002);
     echo_server.start_accept();
-    echo_server.run();
+    std::cout << "RUN SERV " << std::endl;
+    try {
+        echo_server.run();
+    } catch (const websocketpp::lib::error_code& e) {
+                cout << "COULD NOT RUN SERV: " << e << "(" << e.message() << ")" << endl;
+            }
     std::cout << "SERVER IS RUNNING " << std::endl;
 
     return 0;
