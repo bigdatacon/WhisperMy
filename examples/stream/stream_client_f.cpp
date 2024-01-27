@@ -574,7 +574,8 @@ int main(int argc, char **argv) {
     client echo_client;
 
     // Запуск потока для клиента
-    std::thread client_thread(client_thread_function, &echo_client);
+    std::thread client_thread
+    (client_thread_function, &echo_client);
 
     // Запуск основной функции для обработки звука
     websocketpp::connection_hdl hdl;
