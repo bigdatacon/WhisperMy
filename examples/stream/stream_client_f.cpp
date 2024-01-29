@@ -25,27 +25,6 @@
 typedef websocketpp::client<websocketpp::config::asio_client> client;
 
 auto client_thread_function = [](client* echo_client) {
-    // Инициализация клиента
-    echo_client->init_asio();
-    std::cout << "START CLIENT" << std::endl;
-
-    // Установка обработчиков
-    echo_client->set_message_handler([](websocketpp::connection_hdl hdl, client::message_ptr msg) {
-        std::cout << "Received Message: " << msg->get_payload() << std::endl;
-    });
-
-    // Получение соединения с сервером
-    websocketpp::lib::error_code ec;
-    auto con = echo_client->get_connection("ws://localhost:9002", ec);
-
-    if (ec) {
-        std::cout << "Could not create connection because: " << ec.message() << std::endl;
-        return;
-    }
-
-    // Подключение к серверу
-    echo_client->connect(con);
-
     // Запуск клиента
     echo_client->run();
     // Добавьте код для корректного закрытия клиента
@@ -193,52 +172,12 @@ void whisper_print_usage(int /*argc*/, char ** argv, const whisper_params & para
     fprintf(stderr, "\n");
 }
 
-int audio_processing_function(int argc, char ** argv,  websocketpp::connection_hdl hdl) {
+int audio_processing_function(int argc, char ** argv, client * echo_client, client::connection_ptr *con) {
 
     // Описываю подключение клиента
     using websocketpp::lib::placeholders::_1;
     using websocketpp::lib::placeholders::_2;
     using websocketpp::lib::bind;
-
-    // Create a client endpoint
-    typedef websocketpp::client<websocketpp::config::asio_client> client;
-
-    // Set up a client
-    client echo_client;
-
-    // Initialize the client
-    echo_client.init_asio();
-    std::cout << "START CLIENT" << std::endl;
-
-    // Register our message handler
-    echo_client.set_message_handler(bind([&](websocketpp::connection_hdl hdl, client::message_ptr msg) {
-        std::cout << "Received Message: " << msg->get_payload() << std::endl;
-    }, _1, _2));
-
-    // Отправить сообщение на сервер после успешного подключения
-    echo_client.set_open_handler([&](websocketpp::connection_hdl hdl) {
-        echo_client.send(hdl, "Hello", websocketpp::frame::opcode::text);
-    });
-
-
-    // Get a connection to the desired server
-    websocketpp::lib::error_code ec;
-    client::connection_ptr con = echo_client.get_connection("ws://localhost:9002", ec);
-
-    if (ec) {
-        std::cout << "Could not create connection because: " << ec.message() << std::endl;
-        return 1;
-    }
-
-    // Connect to the server
-    echo_client.connect(con);
-
-    // Run the client
-    echo_client.run();
-
-    // закончил описывать подключение клиента
-
-
 
     std::ofstream outFile("samples/myfile.txt");
     std::cout << "HA HA " << std::endl;
@@ -357,7 +296,10 @@ int audio_processing_function(int argc, char ** argv,  websocketpp::connection_h
         websocketpp::connection_hdl hdl;
         if (params.save_audio) {
             wavWriter.write(pcmf32_new.data(), pcmf32_new.size());
+            // Отправка данных на сервер
+            echo_client->send((*con)->get_handle(), pcmf32_new.data(), pcmf32_new.size() * sizeof(float), websocketpp::frame::opcode::binary);
         }
+
         // handle Ctrl + C
         is_running = sdl_poll_events();
 
@@ -485,10 +427,9 @@ int audio_processing_function(int argc, char ** argv,  websocketpp::connection_h
 
 
                     outFile << text << std::endl;
-//                    echo_client.set_open_handler([&](websocketpp::connection_hdl hdl) {
-//                        echo_client.send(hdl, text, websocketpp::frame::opcode::text);
-//                    });
-                    echo_client.send(hdl, text, websocketpp::frame::opcode::text);
+
+                    /* Отправляем данные серверу */
+                    echo_client->send((*con)->get_handle(), text, websocketpp::frame::opcode::text);
 
                     // Закрытие файла
                     //
@@ -570,16 +511,35 @@ int main(int argc, char **argv) {
     // Запуск потока для клиента
     //std::thread client_thread(client_thread_function);
 
-    // Глобальный объект клиента
+    // Объект клиента
     client echo_client;
 
+    // Инициализация клиента
+    echo_client.init_asio();
+
+    // Установка обработчиков
+    echo_client.set_message_handler([](websocketpp::connection_hdl hdl, client::message_ptr msg) {
+        std::cout << "Received Message: " << msg->get_payload() << std::endl;
+    });
+
+    // Получение соединения с сервером
+    websocketpp::lib::error_code ec;
+    client::connection_ptr con = echo_client.get_connection("ws://localhost:9002", ec);
+
+    if (ec) {
+        std::cout << "Could not create connection because: " << ec.message() << std::endl;
+        return 1;
+    }
+
+    // Подключение к серверу
+    echo_client.connect(con);
+
+
     // Запуск потока для клиента
-    std::thread client_thread
-    (client_thread_function, &echo_client);
+    std::thread client_thread(client_thread_function, &echo_client);
 
     // Запуск основной функции для обработки звука
-    websocketpp::connection_hdl hdl;
-    audio_processing_function(argc, argv, hdl);
+    audio_processing_function(argc, argv, &echo_client, &con);
 
     // Ожидание завершения потока клиента
     client_thread.join();
