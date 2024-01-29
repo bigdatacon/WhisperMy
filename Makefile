@@ -375,11 +375,17 @@ server: examples/server/server.cpp $(SRC_COMMON) $(WHISPER_OBJ)
 stream_server: examples/stream/stream_server.cpp $(SRC_COMMON) $(SRC_COMMON_SDL) $(WHISPER_OBJ)
 	$(CXX) $(CXXFLAGS) examples/stream/stream_server.cpp $(SRC_COMMON) $(SRC_COMMON_SDL) $(WHISPER_OBJ) -o stream_server $(CC_SDL) $(LDFLAGS)
 
+stream_server_w: examples/stream/stream_server_w.cpp $(SRC_COMMON) $(SRC_COMMON_SDL) $(WHISPER_OBJ)
+	$(CXX) $(CXXFLAGS) examples/stream/stream_server_w.cpp $(SRC_COMMON) $(SRC_COMMON_SDL) $(WHISPER_OBJ) -o stream_server_w $(CC_SDL) $(LDFLAGS)
+
 stream_server_f: examples/stream/stream_server_f.cpp $(SRC_COMMON) $(SRC_COMMON_SDL) $(WHISPER_OBJ)
 	$(CXX) $(CXXFLAGS) examples/stream/stream_server_f.cpp $(SRC_COMMON) $(SRC_COMMON_SDL) $(WHISPER_OBJ) -o stream_server_f $(CC_SDL) $(LDFLAGS)
 
 stream: examples/stream/stream.cpp $(SRC_COMMON) $(SRC_COMMON_SDL) $(WHISPER_OBJ)
 	$(CXX) $(CXXFLAGS) examples/stream/stream.cpp $(SRC_COMMON) $(SRC_COMMON_SDL) $(WHISPER_OBJ) -o stream $(CC_SDL) $(LDFLAGS)
+
+stream_client_w: examples/stream/stream_client_w.cpp $(SRC_COMMON) $(SRC_COMMON_SDL) $(WHISPER_OBJ)
+	$(CXX) $(CXXFLAGS) examples/stream/stream_client_w.cpp $(SRC_COMMON) $(SRC_COMMON_SDL) $(WHISPER_OBJ) -o stream_client_w $(CC_SDL) $(LDFLAGS)
 
 stream_client_f: examples/stream/stream_client_f.cpp $(SRC_COMMON) $(SRC_COMMON_SDL) $(WHISPER_OBJ)
 	$(CXX) $(CXXFLAGS) examples/stream/stream_client_f.cpp $(SRC_COMMON) $(SRC_COMMON_SDL) $(WHISPER_OBJ) -o stream_client_f $(CC_SDL) $(LDFLAGS)
