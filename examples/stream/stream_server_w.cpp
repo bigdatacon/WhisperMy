@@ -158,8 +158,8 @@ void on_message(int argc, char ** argv,  server* s, websocketpp::connection_hdl 
 
     // init audio
 
-    audio_async audio(params.length_ms);
-    if (!audio.init(params.capture_id, WHISPER_SAMPLE_RATE)) {
+    //audio_async audio(params.length_ms);
+    /*if (!audio.init(params.capture_id, WHISPER_SAMPLE_RATE)) {
         fprintf(stderr, "%s: audio.init() failed!\n", __func__);
         return;
     }
@@ -172,7 +172,7 @@ void on_message(int argc, char ** argv,  server* s, websocketpp::connection_hdl 
         whisper_print_usage(argc, argv, params);
         exit(0);
     }
-
+    */
     struct whisper_context_params cparams;
     cparams.use_gpu = params.use_gpu;
 
@@ -185,6 +185,7 @@ void on_message(int argc, char ** argv,  server* s, websocketpp::connection_hdl 
     std::vector<whisper_token> prompt_tokens;
 
     // print some info about the processing
+    /*
     {
         fprintf(stderr, "\n");
         if (!whisper_is_multilingual(ctx)) {
@@ -213,6 +214,7 @@ void on_message(int argc, char ** argv,  server* s, websocketpp::connection_hdl 
 
         fprintf(stderr, "\n");
     }
+     */
 
     int n_iter = 0;
     auto t_last  = std::chrono::high_resolution_clock::now();
@@ -229,7 +231,7 @@ void on_message(int argc, char ** argv,  server* s, websocketpp::connection_hdl 
         size_t length = msg->get_payload().length();
 
         // Преобразование данных обратно в std::vector<float>
-        std::vector<float> received_data(reinterpret_cast<const float*>(data), reinterpret_cast<const float*>(data + length));
+        std::vector<float> pcmf32(reinterpret_cast<const float*>(data), reinterpret_cast<const float*>(data + length));
 
         //  received_data содержит данные в формате std::vector<float> - начало их обработки
         while (is_running) {
@@ -237,61 +239,6 @@ void on_message(int argc, char ** argv,  server* s, websocketpp::connection_hdl 
             is_running = sdl_poll_events();
             if (!is_running) {
                 break;
-            }
-            if (!use_vad) {
-                while (true) {
-                    audio.get(params.step_ms, pcmf32_new);
-
-                    if ((int) pcmf32_new.size() > 2*n_samples_step) {
-                        fprintf(stderr, "\n\n%s: WARNING: cannot process audio fast enough, dropping audio ...\n\n", __func__);
-                        audio.clear();
-                        continue;
-                    }
-
-                    if ((int) pcmf32_new.size() >= n_samples_step) {
-                        audio.clear();
-                        break;
-                    }
-
-                    std::this_thread::sleep_for(std::chrono::milliseconds(1));
-                }
-
-                const int n_samples_new = pcmf32_new.size();
-
-                // take up to params.length_ms audio from previous iteration
-                const int n_samples_take = std::min((int) pcmf32_old.size(), std::max(0, n_samples_keep + n_samples_len - n_samples_new));
-
-                //printf("processing: take = %d, new = %d, old = %d\n", n_samples_take, n_samples_new, (int) pcmf32_old.size());
-
-                pcmf32.resize(n_samples_new + n_samples_take);
-
-                for (int i = 0; i < n_samples_take; i++) {
-                    pcmf32[i] = pcmf32_old[pcmf32_old.size() - n_samples_take + i];
-                }
-
-                memcpy(pcmf32.data() + n_samples_take, pcmf32_new.data(), n_samples_new*sizeof(float));
-
-                pcmf32_old = pcmf32;
-            } else {
-                const auto t_now  = std::chrono::high_resolution_clock::now();
-                const auto t_diff = std::chrono::duration_cast<std::chrono::milliseconds>(t_now - t_last).count();
-
-                if (t_diff < 2000) {
-                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-                    continue;
-                }
-
-                audio.get(2000, pcmf32_new);
-
-                if (::vad_simple(pcmf32_new, WHISPER_SAMPLE_RATE, 1000, params.vad_thold, params.freq_thold, false)) {
-                    audio.get(params.length_ms, pcmf32);
-                } else {
-                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
-                    continue;
-                }
-
-                t_last = t_now;
             }
 
             // run the inference
@@ -434,4 +381,3 @@ int main(int argc, char ** argv) {
 
     return 0;
 }
-
