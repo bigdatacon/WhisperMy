@@ -31,34 +31,6 @@ auto client_thread_function = [](client* echo_client) {
     echo_client->stop();  // Используйте метод stop вместо close
 };
 
-// Определение функции для запуска клиента в отдельном потоке
-/*
-auto client_thread_function = [&echo_client]() {
-    // Инициализация клиента
-    echo_client.init_asio();
-    std::cout << "START CLIENT" << std::endl;
-
-    // Установка обработчиков
-    echo_client.set_message_handler([](websocketpp::connection_hdl hdl, websocketpp::client<websocketpp::config::asio_client>::message_ptr msg) {
-        std::cout << "Received Message: " << msg->get_payload() << std::endl;
-    });
-
-    // Получение соединения с сервером
-    websocketpp::lib::error_code ec;
-    auto con = echo_client.get_connection("ws://localhost:9002", ec);
-
-    if (ec) {
-        std::cout << "Could not create connection because: " << ec.message() << std::endl;
-        return;
-    }
-
-    // Подключение к серверу
-    echo_client.connect(con);
-
-    // Запуск клиента
-    echo_client.run();
-};
-*/
 
 //  500 -> 00:05.000
 // 6000 -> 01:00.000
@@ -180,18 +152,24 @@ int audio_processing_function(int argc, char ** argv, client * echo_client, clie
     bool is_running = sdl_poll_events();
 
     std::vector<float> pcmf32_new= {1.0f, 3.0f, 5.0f};
-    try {
-    echo_client->send((*con)->get_handle(), pcmf32_new.data(), pcmf32_new.size() * sizeof(float), websocketpp::frame::opcode::binary);
-    } catch (const std::exception& e) {
-        // Обработка исключения
-        std::cerr << "Exception caught in send bytes: " << e.what() << std::endl;}
-    // 2 попытка отправить байты указав длину иначе
-    std::vector<float> pcmf32_new2= {11.0f, 31.0f, 51.0f};
-    try {
-        echo_client->send((*con)->get_handle(), pcmf32_new2.data(), pcmf32_new.size() , websocketpp::frame::opcode::binary);
-    } catch (const std::exception& e) {
-        // Обработка исключения
-        std::cerr << "Exception caught in send bytes type 2: " << e.what() << std::endl;}
+    std::cout << "проверка подключения на клиенте " << std::endl;
+    if ((*con)->get_state() == websocketpp::session::state::open) {
+        std::cout << "подключение норм  - пытаюсь сделать отправку " << std::endl;
+        try {
+            echo_client->send((*con)->get_handle(), pcmf32_new.data(), pcmf32_new.size() * sizeof(float),
+                              websocketpp::frame::opcode::binary);
+        } catch (const std::exception &e) {
+            // Обработка исключения
+            std::cerr << "Exception caught in send bytes: " << e.what() << std::endl;
+        }
+        // 2 попытка отправить байты указав длину иначе
+    }
+//    std::vector<float> pcmf32_new2= {11.0f, 31.0f, 51.0f};
+//    try {
+//        echo_client->send((*con)->get_handle(), pcmf32_new2.data(), pcmf32_new.size() , websocketpp::frame::opcode::binary);
+//    } catch (const std::exception& e) {
+//        // Обработка исключения
+//        std::cerr << "Exception caught in send bytes type 2: " << e.what() << std::endl;}
 
     return 0;
 }
