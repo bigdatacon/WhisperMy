@@ -165,6 +165,7 @@ int audio_processing_function(int argc, char ** argv, client * echo_client, clie
         }
         // 2 попытка отправить байты указав длину иначе
     }
+    else {std::cout << "нет подклюечения на клиенте : "  << std::endl;}
 //    std::vector<float> pcmf32_new2= {11.0f, 31.0f, 51.0f};
 //    try {
 //        echo_client->send((*con)->get_handle(), pcmf32_new2.data(), pcmf32_new.size() , websocketpp::frame::opcode::binary);
