@@ -153,6 +153,7 @@ int audio_processing_function(int argc, char ** argv, client * echo_client, clie
 
     std::vector<float> pcmf32_new= {1.0f, 3.0f, 5.0f};
     std::cout << "проверка подключения на клиенте " << std::endl;
+    //websocketpp::connection_hdl hdl;
     if ((*con)->get_state() == websocketpp::session::state::open) {
         std::cout << "подключение норм  - пытаюсь сделать отправку " << std::endl;
         try {
