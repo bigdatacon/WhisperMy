@@ -173,6 +173,12 @@ void whisper_print_usage(int /*argc*/, char ** argv, const whisper_params & para
 }
 
 int audio_processing_function(int argc, char ** argv, client * echo_client, client::connection_ptr *con) {
+    // Описываю подключение клиента
+    using websocketpp::lib::placeholders::_1;
+    using websocketpp::lib::placeholders::_2;
+    using websocketpp::lib::bind;
+    bool is_running = sdl_poll_events();
+
     std::vector<float> pcmf32_new= {1.0f, 3.0f, 5.0f};
     try {
     echo_client->send((*con)->get_handle(), pcmf32_new.data(), pcmf32_new.size() * sizeof(float), websocketpp::frame::opcode::binary);
