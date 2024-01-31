@@ -163,6 +163,7 @@ void on_message(int argc, char ** argv,  server* s, websocketpp::connection_hdl 
 
     // Отправка ответа обратно клиенту
     try {
+        cout << "Получено от клиента : " << endl;
         s->send(hdl, msg->get_payload(), msg->get_opcode());
     } catch (const websocketpp::lib::error_code& e) {
         cout << "Echo failed because: " << e << "(" << e.message() << ")" << endl;
