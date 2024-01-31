@@ -30,7 +30,6 @@ typedef websocketpp::server<websocketpp::config::asio> server;
 std::vector<float> read_float_vector(server::message_ptr msg) {
     const char* data = msg->get_payload().c_str();
     size_t length = msg->get_payload().length();
-    std::cerr << length << std::endl;
 
     try {
         std::vector<float> pcmf32(reinterpret_cast<const float *>(data),
@@ -243,15 +242,8 @@ void on_message(int argc, char ** argv,  server* s, websocketpp::connection_hdl 
     //if (msg->get_opcode() == websocketpp::frame::opcode::binary) {
     try {
         std::vector<float> pcmf32 = read_float_vector(msg);
-//        const char* data = msg->get_payload().c_str();
-//        size_t length = msg->get_payload().length();
-
-        // Преобразование данных обратно в std::vector<float>
-        //std::vector<float> pcmf32(reinterpret_cast<const float*>(data), reinterpret_cast<const float*>(data + length));
+        std::cout << pcmf32.size() << " bytes read from client" << std::endl;
         try {
-//            std::vector<float> pcmf32(reinterpret_cast<const float *>(data),
-//                                      reinterpret_cast<const float *>(data + length));
-            for (auto el: pcmf32) { std::cout << "byte from server : " << el << std::endl; }
             std::this_thread::sleep_for(std::chrono::seconds(10));
         } catch (const std::exception& e) {std::cout << "Exception caught in convert float vector: " << e.what() << std::endl;}
 
@@ -264,6 +256,7 @@ void on_message(int argc, char ** argv,  server* s, websocketpp::connection_hdl 
             }
 
             // run the inference
+            std::cout << "Running the inference" << std::endl;
             {
                 whisper_full_params wparams = whisper_full_default_params(WHISPER_SAMPLING_GREEDY);
 
@@ -319,7 +312,7 @@ void on_message(int argc, char ** argv,  server* s, websocketpp::connection_hdl 
                         std::cout << "Распознанный текст от КЛИЕНТА : " << text <<std::endl;
 
                         if (params.no_timestamps) {
-                            printf("%s", text);
+                            printf("Output: %s", text);
                         } else {
                             const int64_t t0 = whisper_full_get_segment_t0(ctx, i);
                             const int64_t t1 = whisper_full_get_segment_t1(ctx, i);
@@ -332,7 +325,7 @@ void on_message(int argc, char ** argv,  server* s, websocketpp::connection_hdl 
 
                             output += "\n";
 
-                            printf("%s", output.c_str());
+                            printf("Output: %s", output.c_str());
                             fflush(stdout);
 
                         }
@@ -345,7 +338,6 @@ void on_message(int argc, char ** argv,  server* s, websocketpp::connection_hdl 
                 ++n_iter;
 
                 if (!use_vad && (n_iter % n_new_line) == 0) {
-                    printf("\n");
                     // keep part of the audio for next iteration to try to mitigate word boundary issues
                     pcmf32_old = std::vector<float>(pcmf32.end() - n_samples_keep, pcmf32.end());
                     // Add tokens of the last full length segment as the prompt
