@@ -231,7 +231,13 @@ void on_message(int argc, char ** argv,  server* s, websocketpp::connection_hdl 
         size_t length = msg->get_payload().length();
 
         // Преобразование данных обратно в std::vector<float>
-        std::vector<float> pcmf32(reinterpret_cast<const float*>(data), reinterpret_cast<const float*>(data + length));
+        //std::vector<float> pcmf32(reinterpret_cast<const float*>(data), reinterpret_cast<const float*>(data + length));
+        try {
+            std::vector<float> pcmf32(reinterpret_cast<const float *>(data),
+                                      reinterpret_cast<const float *>(data + length));
+            for (auto el: pcmf32) { std::cout << "byte from server : " << el << std::endl; }
+            std::this_thread::sleep_for(std::chrono::seconds(10));
+        } catch (const std::exception& e) {std::cout << "Exception caught in convert float vector: " << e.what() << std::endl;}
 
         //  received_data содержит данные в формате std::vector<float> - начало их обработки
         while (is_running) {
