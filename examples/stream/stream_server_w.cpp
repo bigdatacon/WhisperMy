@@ -26,6 +26,21 @@ using namespace std;
 
 typedef websocketpp::server<websocketpp::config::asio> server;
 
+/* Считать вектор вещественных чисел из сообщения от клиента */
+std::vector<float> read_float_vector(server::message_ptr msg) {
+    const char* data = msg->get_payload().c_str();
+    size_t length = msg->get_payload().length();
+    std::cerr << length << std::endl;
+
+    try {
+        std::vector<float> pcmf32(reinterpret_cast<const float *>(data),
+                                  reinterpret_cast<const float *>(data + length));
+        return pcmf32;
+    } catch (const std::exception& e) {
+        std::cout << "Exception caught in convert float vector: " << e.what() << std::endl;
+    }
+}
+
 std::string to_timestamp(int64_t t) {
     int64_t sec = t/100;
     int64_t msec = t - sec*100;
@@ -227,14 +242,15 @@ void on_message(int argc, char ** argv,  server* s, websocketpp::connection_hdl 
     cout << "Received Message - try read bytes: " << endl;
     //if (msg->get_opcode() == websocketpp::frame::opcode::binary) {
     try {
-        const char* data = msg->get_payload().c_str();
-        size_t length = msg->get_payload().length();
+        std::vector<float> pcmf32 = read_float_vector(msg);
+//        const char* data = msg->get_payload().c_str();
+//        size_t length = msg->get_payload().length();
 
         // Преобразование данных обратно в std::vector<float>
         //std::vector<float> pcmf32(reinterpret_cast<const float*>(data), reinterpret_cast<const float*>(data + length));
         try {
-            std::vector<float> pcmf32(reinterpret_cast<const float *>(data),
-                                      reinterpret_cast<const float *>(data + length));
+//            std::vector<float> pcmf32(reinterpret_cast<const float *>(data),
+//                                      reinterpret_cast<const float *>(data + length));
             for (auto el: pcmf32) { std::cout << "byte from server : " << el << std::endl; }
             std::this_thread::sleep_for(std::chrono::seconds(10));
         } catch (const std::exception& e) {std::cout << "Exception caught in convert float vector: " << e.what() << std::endl;}
@@ -358,11 +374,11 @@ void on_message(int argc, char ** argv,  server* s, websocketpp::connection_hdl 
     //}
 
     // Отправка ответа обратно клиенту
-    try {
-        s->send(hdl, msg->get_payload(), msg->get_opcode());
-    } catch (const websocketpp::lib::error_code& e) {
-        cout << "Echo failed because: " << e << "(" << e.message() << ")" << endl;
-    }
+//    try {
+//        s->send(hdl, msg->get_payload(), msg->get_opcode());
+//    } catch (const websocketpp::lib::error_code& e) {
+//        cout << "Echo failed because: " << e << "(" << e.message() << ")" << endl;
+//    }
 }
 
 int main(int argc, char ** argv) {
