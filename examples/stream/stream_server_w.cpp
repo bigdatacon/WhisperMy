@@ -309,7 +309,7 @@ void on_message(int argc, char ** argv,  server* s, websocketpp::connection_hdl 
                     for (int i = 0; i < n_segments; ++i) {
                         const char * text = whisper_full_get_segment_text(ctx, i);
 
-                        std::cout << "Распознанный текст от КЛИЕНТА : " << text <<std::endl;
+                        std::cerr << "Распознанный текст от КЛИЕНТА : " << text <<std::endl;
 
                         if (params.no_timestamps) {
                             printf("Output: %s", text);
@@ -369,13 +369,13 @@ void on_message(int argc, char ** argv,  server* s, websocketpp::connection_hdl 
 //    try {
 //        s->send(hdl, msg->get_payload(), msg->get_opcode());
 //    } catch (const websocketpp::lib::error_code& e) {
-//        cout << "Echo failed because: " << e << "(" << e.message() << ")" << endl;
+//        cerr << "Echo failed because: " << e << "(" << e.message() << ")" << endl;
 //    }
 }
 
 int main(int argc, char ** argv) {
     server echo_server;
-    std::cout << "START SERV " << std::endl;
+    std::cerr << "START SERV " << std::endl;
 
     // Установка обработчика сообщений
     echo_server.set_message_handler(bind(on_message, argc,  argv, &echo_server, placeholders::_1, placeholders::_2));
@@ -386,7 +386,7 @@ int main(int argc, char ** argv) {
         echo_server.init_asio();
         echo_server.listen(9002);
         echo_server.start_accept();
-        std::cout << "RUN SERV " << std::endl;
+        std::cerr << "RUN SERV " << std::endl;
         echo_server.run();
     });
 
