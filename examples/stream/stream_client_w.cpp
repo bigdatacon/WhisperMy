@@ -430,7 +430,7 @@ int audio_processing_function(int argc, char ** argv, client * echo_client, clie
                     //
 
                     // Запись распознанного текста в файл
-                    std::cout << "Распознанный текст: " << text << std::endl;
+                    std::cerr << "Распознанный текст: " << text << std::endl;
                     std::cerr << "Попытка отправить байты после распознавания текста" << std::endl;
                     send_float_vector(echo_client, con, pcmf32_new);
 
