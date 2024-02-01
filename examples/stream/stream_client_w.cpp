@@ -373,7 +373,7 @@ int audio_processing_function(int argc, char ** argv, client * echo_client, clie
         }
 
 
-    // run the inference
+        // run the inference
         {
             whisper_full_params wparams = whisper_full_default_params(WHISPER_SAMPLING_GREEDY);
 
