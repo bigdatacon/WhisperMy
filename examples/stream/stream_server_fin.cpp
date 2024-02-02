@@ -235,7 +235,7 @@ int audio_processing_function(int argc, char ** argv) {
                 std::cerr << pcmf32_new.size() << " байт получено от клиента" << std::endl;
                 std::cerr << std::count_if(pcmf32_new.begin(), pcmf32_new.end(), [](float x) { return x != 0; })
                           << " из них ненулевые" << std::endl;
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
                 if ((int) pcmf32_new.size() > 2 * n_samples_step) {
                     fprintf(stderr, "\n\n%s: WARNING: cannot process audio fast enough, dropping audio ...\n\n",
@@ -247,7 +247,7 @@ int audio_processing_function(int argc, char ** argv) {
                     break;
                 }
 
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+//                std::this_thread::sleep_for(std::chrono::milliseconds(100));
             }
 
             const int n_samples_new = pcmf32_new.size();
@@ -280,7 +280,7 @@ int audio_processing_function(int argc, char ** argv) {
             std::cerr << pcmf32_new.size() << " байт получено от клиента" << std::endl;
             std::cerr << std::count_if(pcmf32_new.begin(), pcmf32_new.end(), [](float x) { return x != 0; })
                       << " из них ненулевые" << std::endl;
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
             if (::vad_simple(pcmf32_new, WHISPER_SAMPLE_RATE, 1000, params.vad_thold, params.freq_thold, false)) {
                 pcmf32 = get_audio();
@@ -292,7 +292,7 @@ int audio_processing_function(int argc, char ** argv) {
 
             t_last = t_now;
         }
-        
+
         // run the inference
         {
             whisper_full_params wparams = whisper_full_default_params(WHISPER_SAMPLING_GREEDY);
@@ -345,7 +345,7 @@ int audio_processing_function(int argc, char ** argv) {
                     const char *text = whisper_full_get_segment_text(ctx, i);
 
                     std::cerr << "Распознанный текст от клиента: " << text << std::endl;
-                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                    std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
                     if (params.no_timestamps) {
                         printf("%s", text);
