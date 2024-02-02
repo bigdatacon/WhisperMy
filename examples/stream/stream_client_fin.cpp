@@ -249,7 +249,7 @@ int audio_processing_function(int argc, char ** argv, client * echo_client, clie
                     break;
                 }
 
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+//                std::this_thread::sleep_for(std::chrono::milliseconds(100));
             }
 
             const int n_samples_new = pcmf32_new.size();
@@ -296,11 +296,21 @@ int audio_processing_function(int argc, char ** argv, client * echo_client, clie
 
     audio.pause();
     whisper_print_timings(ctx);
-    whisper_free(ctx)
+    whisper_free(ctx);
     return 0;
 }
 
+//запуск
+
+//./stream_client_fin 192.168.0.100 -- тут адрес сервера которы еще не подключен
 int main(int argc, char **argv) {
+    if (argc != 2) {
+        std::cerr << "Usage: " << argv[0] << " <server_ip>" << std::endl;
+        return 1;
+    }
+
+    std::string server_ip = argv[1];
+
     // Запуск потока для клиента
     //std::thread client_thread(client_thread_function);
 
@@ -317,7 +327,9 @@ int main(int argc, char **argv) {
 
     // Получение соединения с сервером
     websocketpp::lib::error_code ec;
-    client::connection_ptr con = echo_client.get_connection("ws://localhost:9002", ec);
+//    client::connection_ptr con = echo_client.get_connection("ws://localhost:9002", ec);
+    client::connection_ptr con = echo_client.get_connection("ws://" + server_ip + ":9002", ec);
+
 
     if (ec) {
         std::cerr << "Could not create connection because: " << ec.message() << std::endl;
@@ -339,3 +351,44 @@ int main(int argc, char **argv) {
 
     return 0;
 }
+
+
+//int main(int argc, char **argv) {
+//    // Запуск потока для клиента
+//    //std::thread client_thread(client_thread_function);
+//
+//    // Объект клиента
+//    client echo_client;
+//
+//    // Инициализация клиента
+//    echo_client.init_asio();
+//
+//    // Установка обработчиков
+//    echo_client.set_message_handler([](websocketpp::connection_hdl hdl, client::message_ptr msg) {
+//        std::cerr << "Received Message: " << msg->get_payload() << std::endl;
+//    });
+//
+//    // Получение соединения с сервером
+//    websocketpp::lib::error_code ec;
+//    client::connection_ptr con = echo_client.get_connection("ws://localhost:9002", ec);
+//
+//    if (ec) {
+//        std::cerr << "Could not create connection because: " << ec.message() << std::endl;
+//        return 1;
+//    }
+//
+//    // Подключение к серверу
+//    echo_client.connect(con);
+//
+//
+//    // Запуск потока для клиента
+//    std::thread client_thread(client_thread_function, &echo_client);
+//
+//    // Запуск основной функции для обработки звука
+//    audio_processing_function(argc, argv, &echo_client, &con);
+//
+//    // Ожидание завершения потока клиента
+//    client_thread.join();
+//
+//    return 0;
+//}
