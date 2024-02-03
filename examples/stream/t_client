@@ -39,7 +39,7 @@ void send_float_vector(client * cli, client::connection_ptr * con, const std::ve
                 vec.size() * sizeof(float),
                 websocketpp::frame::opcode::binary
         );
-        std::this_thread::sleep_for(std::chrono::seconds(2));
+        std::this_thread::sleep_for(std::chrono::seconds(3));
     } catch (const std::exception &e) {
         // Обработка исключения
         std::cerr << "Exception caught in send bytes: " << e.what() << std::endl;
@@ -231,9 +231,7 @@ int audio_processing_function(int argc, char ** argv, client * echo_client, clie
             std::cerr << pcmf32_new.size() << "  NOT USE VAD" << std::endl;
             while (true) {
                 audio.get(params.step_ms, pcmf32_new);
-                //std::cerr <<  "DONT SPEAK FOR  3 SEC" << std::endl;
                 send_float_vector(echo_client, con, pcmf32_new);
-                //std::cerr <<  " YOU CAN SPEAK NOW" << std::endl;
 
                 std::cerr << pcmf32_new.size() << " байт отправлены на сервер от клиента" << std::endl;
                 std::cerr << std::count_if(pcmf32_new.begin(), pcmf32_new.end(), [](float x) { return x != 0; })
