@@ -239,7 +239,7 @@ int audio_processing_function(int argc, char ** argv) {
 
                 //std::cerr << pcmf32_new.size() << " байт получено от клиента" << std::endl;
                 //std::cerr << std::count_if(pcmf32_new.begin(), pcmf32_new.end(), [](float x) { return x != 0; })
-                          //<< " из них ненулевые" << std::endl;
+                //<< " из них ненулевые" << std::endl;
                 //std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
                 if ((int) pcmf32_new.size() > 2 * n_samples_step) {
