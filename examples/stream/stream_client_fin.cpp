@@ -92,7 +92,8 @@ struct whisper_params {
 void whisper_print_usage(int argc, char ** argv, const whisper_params & params);
 
 bool whisper_params_parse(int argc, char ** argv, whisper_params & params) {
-    for (int i = 1; i < argc; i++) {
+    /* Параметр argv[1] всегда будет IP адресом сервера а дальше прочие опции */
+    for (int i = 2; i < argc; i++) {
         std::string arg = argv[i];
 
         if (arg == "-h" || arg == "--help") {
@@ -129,6 +130,7 @@ bool whisper_params_parse(int argc, char ** argv, whisper_params & params) {
 
     return true;
 }
+
 
 void whisper_print_usage(int /*argc*/, char ** argv, const whisper_params & params) {
     fprintf(stderr, "\n");
@@ -228,14 +230,10 @@ int audio_processing_function(int argc, char ** argv, client * echo_client, clie
 
         // process new audio
         if (!use_vad) {
+            //std::cerr << pcmf32_new.size() << "  NOT USE VAD" << std::endl;
             while (true) {
                 audio.get(params.step_ms, pcmf32_new);
                 send_float_vector(echo_client, con, pcmf32_new);
-
-                std::cerr << pcmf32_new.size() << " байт отправлены на сервер от клиента" << std::endl;
-                std::cerr << std::count_if(pcmf32_new.begin(), pcmf32_new.end(), [](float x) { return x != 0; })
-                          << " из них ненулевые" << std::endl;
-//                std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
                 if ((int) pcmf32_new.size() > 2 * n_samples_step) {
                     fprintf(stderr, "\n\n%s: WARNING: cannot process audio fast enough, dropping audio ...\n\n",
@@ -249,7 +247,7 @@ int audio_processing_function(int argc, char ** argv, client * echo_client, clie
                     break;
                 }
 
-//                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
             }
 
             const int n_samples_new = pcmf32_new.size();
@@ -277,11 +275,8 @@ int audio_processing_function(int argc, char ** argv, client * echo_client, clie
                 continue;
             }
 
-            audio.get(2000, pcmf32_new);
+            audio.get(params.step_ms, pcmf32_new);
             send_float_vector(echo_client, con, pcmf32_new);
-
-            std::cerr << "Байты отправлены на сервер от клиента 2" << std::endl;
-//           std::this_thread::sleep_for(std::chrono::milliseconds(10000));
             if (::vad_simple(pcmf32_new, WHISPER_SAMPLE_RATE, 1000, params.vad_thold, params.freq_thold, false)) {
                 audio.get(params.length_ms, pcmf32);
             } else {
@@ -301,11 +296,11 @@ int audio_processing_function(int argc, char ** argv, client * echo_client, clie
 }
 
 //запуск
-
-//./stream_client_fin 192.168.0.100 -- тут адрес сервера которы еще не подключен
+//./stream_server_fin > 127.0.0.1 > -vth > /dev/null-- тут адрес сервера которы еще не подключен и use vad который не работает
+//./stream_server_fin > 127.0.0.1 > /dev/null-- тут адрес сервера которы еще не подключен
 int main(int argc, char **argv) {
-    if (argc != 2) {
-        std::cerr << "Usage: " << argv[0] << " <server_ip>" << std::endl;
+    if (argc < 2) {
+        std::cerr << "Usage: " << argv[0] << " <server_ip> [options]" << std::endl;
         return 1;
     }
 
@@ -322,7 +317,7 @@ int main(int argc, char **argv) {
 
     // Установка обработчиков
     echo_client.set_message_handler([](websocketpp::connection_hdl hdl, client::message_ptr msg) {
-        std::cerr << "Received Message: " << msg->get_payload() << std::endl;
+        std::cerr << "Распознанный текст от сервера: " << msg->get_payload() << std::endl;
     });
 
     // Получение соединения с сервером
@@ -351,44 +346,3 @@ int main(int argc, char **argv) {
 
     return 0;
 }
-
-
-//int main(int argc, char **argv) {
-//    // Запуск потока для клиента
-//    //std::thread client_thread(client_thread_function);
-//
-//    // Объект клиента
-//    client echo_client;
-//
-//    // Инициализация клиента
-//    echo_client.init_asio();
-//
-//    // Установка обработчиков
-//    echo_client.set_message_handler([](websocketpp::connection_hdl hdl, client::message_ptr msg) {
-//        std::cerr << "Received Message: " << msg->get_payload() << std::endl;
-//    });
-//
-//    // Получение соединения с сервером
-//    websocketpp::lib::error_code ec;
-//    client::connection_ptr con = echo_client.get_connection("ws://localhost:9002", ec);
-//
-//    if (ec) {
-//        std::cerr << "Could not create connection because: " << ec.message() << std::endl;
-//        return 1;
-//    }
-//
-//    // Подключение к серверу
-//    echo_client.connect(con);
-//
-//
-//    // Запуск потока для клиента
-//    std::thread client_thread(client_thread_function, &echo_client);
-//
-//    // Запуск основной функции для обработки звука
-//    audio_processing_function(argc, argv, &echo_client, &con);
-//
-//    // Ожидание завершения потока клиента
-//    client_thread.join();
-//
-//    return 0;
-//}
