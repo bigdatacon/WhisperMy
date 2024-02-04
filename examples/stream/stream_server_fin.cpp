@@ -43,6 +43,15 @@ std::vector<float> read_float_vector(server::message_ptr msg) {
     }
 }
 
+static websocketpp::connection_hdl last_handle;
+/* Отправить клиенту распознанный текст, и сразу же вывести его на экран */
+void send_text(server *s, websocketpp::connection_hdl hdl, const std::string &text)
+{
+    s->send(hdl, std::string(text), websocketpp::frame::opcode::text);
+    std::cerr << "Отправляем клиенту распознанный текст: " << text << std::endl;
+}
+
+
 std::string to_timestamp(int64_t t) {
     int64_t sec = t/100;
     int64_t msec = t - sec*100;
@@ -155,14 +164,16 @@ void whisper_print_usage(int /*argc*/, char ** argv, const whisper_params & para
 
 void on_message(int argc, char ** argv,  server* s, websocketpp::connection_hdl hdl, server::message_ptr msg) {
     std::vector<float> pcmf32 = read_float_vector(msg);
-    std::cerr << pcmf32.size() << " bytes read from client" << std::endl;
+//    auto non_null_bytes = std::count_if(pcmf32.begin(), pcmf32.end(), [](float x) { return x != 0; });
     audio_queue.push(pcmf32);
+    last_handle = hdl;
+
 }
 
 
 std::vector<float> get_audio() {
     while (audio_queue.empty()) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::this_thread::sleep_for(std::chrono::seconds(1));
     }
     auto vec = audio_queue.front();
     audio_queue.pop();
@@ -170,7 +181,7 @@ std::vector<float> get_audio() {
 }
 
 
-int audio_processing_function(int argc, char ** argv) {
+int audio_processing_function(int argc, char ** argv, server * serv) {
     whisper_params params;
     if (whisper_params_parse(argc, argv, params) == false) {
         return 1;
@@ -229,14 +240,9 @@ int audio_processing_function(int argc, char ** argv) {
         // process new audio
 
         if (!use_vad) {
+            std::cerr <<"    NOT USE VAD   HERE " << std::endl;
             while (true) {
                 pcmf32_new = get_audio();
-
-                std::cerr << pcmf32_new.size() << " байт получено от клиента" << std::endl;
-                std::cerr << std::count_if(pcmf32_new.begin(), pcmf32_new.end(), [](float x) { return x != 0; })
-                          << " из них ненулевые" << std::endl;
-                std::this_thread::sleep_for(std::chrono::milliseconds(10));
-
                 if ((int) pcmf32_new.size() > 2 * n_samples_step) {
                     fprintf(stderr, "\n\n%s: WARNING: cannot process audio fast enough, dropping audio ...\n\n",
                             __func__);
@@ -247,7 +253,7 @@ int audio_processing_function(int argc, char ** argv) {
                     break;
                 }
 
-//                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
             }
 
             const int n_samples_new = pcmf32_new.size();
@@ -266,6 +272,7 @@ int audio_processing_function(int argc, char ** argv) {
 
             pcmf32_old = pcmf32;
         } else {
+            std::cerr<< "  HERE USE VAD ! " << std::endl;
             const auto t_now = std::chrono::high_resolution_clock::now();
             const auto t_diff = std::chrono::duration_cast<std::chrono::milliseconds>(t_now - t_last).count();
 
@@ -276,10 +283,6 @@ int audio_processing_function(int argc, char ** argv) {
             }
 
             pcmf32_new = get_audio();
-
-            std::cerr << pcmf32_new.size() << " байт получено от клиента" << std::endl;
-            std::cerr << std::count_if(pcmf32_new.begin(), pcmf32_new.end(), [](float x) { return x != 0; })
-                      << " из них ненулевые" << std::endl;
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
             if (::vad_simple(pcmf32_new, WHISPER_SAMPLE_RATE, 1000, params.vad_thold, params.freq_thold, false)) {
@@ -345,7 +348,8 @@ int audio_processing_function(int argc, char ** argv) {
                     const char *text = whisper_full_get_segment_text(ctx, i);
 
                     std::cerr << "Распознанный текст от клиента: " << text << std::endl;
-                    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                    send_text(serv, last_handle, std::string(text));
+//                    std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
                     if (params.no_timestamps) {
                         printf("%s", text);
@@ -422,7 +426,7 @@ int main(int argc, char ** argv) {
         echo_server.run();
     });
 
-    audio_processing_function(argc, argv);
+    audio_processing_function(argc, argv, &echo_server);
 
     // Ожидание завершения потока сервера
     server_thread.join();
