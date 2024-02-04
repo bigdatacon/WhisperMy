@@ -1,3 +1,23 @@
+# stream_server and stream_client
+в корневом каталоге проекта :
+make clean
+make stream_client_fin
+make stream_server_fin
+
+--запуск сервера
+./stream_server_fin > -vth > /dev/null   
+или (так как если поставить параметр use vad - он все равно не активируется)
+./stream_server_fin > /dev/null
+
+-- запуск клиента 
+вместо 127.0.0.1 можно указать любой адрес сервера, в ридми указывается адрес текущего компьютера
+./stream_client_fin 127.0.0.1 > /dev/null   
+
+
+
+
+
+
 # stream
 
 This is a naive example of performing real-time inference on audio from your microphone.
