@@ -4,12 +4,12 @@ make clean
 make stream_client_fin  
 make stream_server_fin  
 
-##запуск сервера  
+## запуск сервера  
 ./stream_server_fin > -vth > /dev/null     
 --или (так как если поставить параметр use vad - он все равно не активируется)  
 ./stream_server_fin > /dev/null  
 
-##запуск клиента   
+## запуск клиента   
 --вместо 127.0.0.1 можно указать любой адрес сервера, в ридми указывается адрес текущего компьютера)  
 ./stream_client_fin 127.0.0.1 > /dev/null     
 
