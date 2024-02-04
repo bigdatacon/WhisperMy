@@ -1,8 +1,8 @@
 # stream_server and stream_client  
 в корневом каталоге проекта :  
-make clean
-make stream_client_fin
-make stream_server_fin
+make clean  
+make stream_client_fin  
+make stream_server_fin  
 
 --запуск сервера  
 ./stream_server_fin > -vth > /dev/null     
