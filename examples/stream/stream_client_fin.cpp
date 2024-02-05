@@ -169,7 +169,7 @@ int audio_processing_function(int argc, char ** argv, client * echo_client, clie
     params.keep_ms = std::min(params.keep_ms, params.step_ms);
     params.length_ms = std::max(params.length_ms, params.step_ms);
 
-    const int n_samples_step = (1e-3 * params.step_ms) * WHISPER_SAMPLE_RATE;
+    const int n_samples_step = (1e-3 * params.step_ms) * WHISPER_SAMPLE_RATE*2;
     const int n_samples_len = (1e-3 * params.length_ms) * WHISPER_SAMPLE_RATE;
     const int n_samples_keep = (1e-3 * params.keep_ms) * WHISPER_SAMPLE_RATE;
     const int n_samples_30s = (1e-3 * 30000.0) * WHISPER_SAMPLE_RATE;
@@ -266,6 +266,7 @@ int audio_processing_function(int argc, char ** argv, client * echo_client, clie
 
             pcmf32_old = pcmf32;
         } else {
+            std::cerr  << "  USE VAD HERE" << std::endl;
             const auto t_now = std::chrono::high_resolution_clock::now();
             const auto t_diff = std::chrono::duration_cast<std::chrono::milliseconds>(t_now - t_last).count();
 
