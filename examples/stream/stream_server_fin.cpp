@@ -4,7 +4,6 @@
 #include <chrono>
 #include <thread>
 #include <fstream>
-#include "common-sdl.h"
 #include "common.h"
 #include "whisper.h"
 
@@ -34,13 +33,9 @@ std::vector<float> read_float_vector(server::message_ptr msg) {
     const char* data = msg->get_payload().c_str();
     size_t length = msg->get_payload().length();
 
-    try {
-        std::vector<float> pcmf32(reinterpret_cast<const float *>(data),
-                                  reinterpret_cast<const float *>(data + length));
-        return pcmf32;
-    } catch (const std::exception& e) {
-        std::cerr << "Exception caught in convert float vector: " << e.what() << std::endl;
-    }
+    std::vector<float> pcmf32(reinterpret_cast<const float *>(data),
+                              reinterpret_cast<const float *>(data + length));
+    return pcmf32;
 }
 
 static websocketpp::connection_hdl last_handle;
@@ -190,7 +185,7 @@ int audio_processing_function(int argc, char ** argv, server * serv) {
     params.keep_ms = std::min(params.keep_ms, params.step_ms);
     params.length_ms = std::max(params.length_ms, params.step_ms);
 
-    const int n_samples_step = (1e-3 * params.step_ms) * WHISPER_SAMPLE_RATE;
+    const int n_samples_step = (1e-3 * params.step_ms) * WHISPER_SAMPLE_RATE*2;
     const int n_samples_len = (1e-3 * params.length_ms) * WHISPER_SAMPLE_RATE;
     const int n_samples_keep = (1e-3 * params.keep_ms) * WHISPER_SAMPLE_RATE;
     const int n_samples_30s = (1e-3 * 30000.0) * WHISPER_SAMPLE_RATE;
@@ -230,14 +225,7 @@ int audio_processing_function(int argc, char ** argv, server * serv) {
 
     // main audio loop
     while (is_running) {
-        // handle Ctrl + C
-        is_running = sdl_poll_events();
-
-        if (!is_running) {
-            break;
-        }
-
-        // process new audio
+        // Process new audio
 
         if (!use_vad) {
             std::cerr <<"    NOT USE VAD   HERE " << std::endl;
