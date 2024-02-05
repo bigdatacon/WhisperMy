@@ -6,13 +6,16 @@ make stream_server_fin
 
 ## запуск сервера  
 ./stream_server_fin > -vth > /dev/null     
---или так:    
+--или так - разницы нет:    
 ./stream_server_fin > /dev/null    
---но если поставить параметр use vad - он все равно не активируется) 
+
 
 ## запуск клиента   
+### Без use vad  
 ./stream_client_fin 127.0.0.1 > /dev/null   
 --вместо 127.0.0.1 можно указать любой адрес сервера, в ридми указывается адрес текущего компьютера)  
+### С USE VAD:  
+./stream_client_fin 127.0.0.1 --step -3000 -vth 0.5 > /dev/null
   
 
 
