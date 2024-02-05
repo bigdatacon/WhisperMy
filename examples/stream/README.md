@@ -11,10 +11,10 @@ make stream_server_fin
 
 
 ## запуск клиента   
-### Без use vad  
+#### Без use vad  
 ./stream_client_fin 127.0.0.1 > /dev/null   
 --вместо 127.0.0.1 можно указать любой адрес сервера, в ридми указывается адрес текущего компьютера)  
-### С USE VAD:  
+#### С USE VAD:  
 ./stream_client_fin 127.0.0.1 --step -3000 -vth 0.5 > /dev/null
   
 
