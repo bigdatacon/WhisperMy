@@ -89,6 +89,7 @@ async def process_asr(m_name, desc, **kwargs):
                         await ws.send(kwargs['vosk_reset_str'])
                     else:
                         await ws.send(chunk['bytes'])
+                        print(f"байты от клиента на сервер отправлены")
                     resp = await ws.recv()
                     resp = json.loads(resp)
                     text = resp.get('text', resp.get('partial', ''))
@@ -111,7 +112,8 @@ def worker_asr(m_name, desc, **kwargs):
 
 
 kwargs = {
-    'host': 'ws://localhost:2700',
+    # 'host': 'ws://localhost:2700',
+    'host': 'ws://localhost:9002',
     'device_in': 0,
     'device_out': 1,
     'channels_in': 1,
