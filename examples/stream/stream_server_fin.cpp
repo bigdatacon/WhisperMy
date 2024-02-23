@@ -318,7 +318,9 @@ int audio_processing_function(int argc, char ** argv, server * serv) {
         }
 
         // run the inference
+
         {
+            std::cerr<< "  run the inference строка 323 " << std::endl;
             whisper_full_params wparams = whisper_full_default_params(WHISPER_SAMPLING_GREEDY);
 
             wparams.print_progress = false;
