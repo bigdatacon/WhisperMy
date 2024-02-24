@@ -21,6 +21,7 @@
 #include <websocketpp/client.hpp>
 #include <streambuf>
 
+bool got_config = false;
 
 using namespace std;
 
@@ -29,43 +30,43 @@ typedef websocketpp::server<websocketpp::config::asio> server;
 std::queue<std::vector<float>> audio_queue;
 
 /* Считать вектор вещественных чисел из сообщения от клиента */
-//std::vector<float> read_float_vector(server::message_ptr msg) {
-//    const char* data = msg->get_payload().c_str();
-//    size_t length = msg->get_payload().length();
-//
-//    std::vector<float> pcmf32(reinterpret_cast<const float *>(data),
-//                              reinterpret_cast<const float *>(data + length));
-//    return pcmf32;
-//}
+std::vector<float> read_float_vector(server::message_ptr msg) {
+    const char* data = msg->get_payload().c_str();
+    size_t length = msg->get_payload().length();
 
-std::vector<float> read_float_vector(websocketpp::server<websocketpp::config::asio>::message_ptr msg) {
-    try {
-        std::cerr << "Пытаюсь прочитать байты от клиента" << std::endl;
-        const char* data = msg->get_payload().c_str();
-        size_t length = msg->get_payload().length();
-
-        // Проверяем, что длина данных кратна размеру int16_t
-        assert(length % sizeof(int16_t) == 0);
-
-        size_t num_samples = length / sizeof(int16_t);
-        std::vector<float> pcmf32(num_samples);
-
-        // Преобразование каждого int16_t значения в float
-        const int16_t* int16_data = reinterpret_cast<const int16_t*>(data);
-        for (size_t i = 0; i < num_samples; ++i) {
-            // Нормализация к диапазону от -1.0 до 1.0
-            pcmf32[i] = int16_data[i] / static_cast<float>(INT16_MAX);
-        }
-
-        return pcmf32;
-    } catch (const std::exception& e) {
-        std::cerr << "Произошла ошибка при чтении байтов от клиента: " << e.what() << std::endl;
-        return std::vector<float>(); // Возвращаем пустой вектор в случае ошибки
-    } catch (...) {
-        std::cerr << "Произошла неизвестная ошибка." << std::endl;
-        return std::vector<float>(); // Возвращаем пустой вектор в случае неизвестной ошибки
-    }
+    std::vector<float> pcmf32(reinterpret_cast<const float *>(data),
+                              reinterpret_cast<const float *>(data + length));
+    return pcmf32;
 }
+
+//std::vector<float> read_float_vector(websocketpp::server<websocketpp::config::asio>::message_ptr msg) {
+//    try {
+//        std::cerr << "Пытаюсь прочитать байты от клиента" << std::endl;
+//        const char* data = msg->get_payload().c_str();
+//        size_t length = msg->get_payload().length();
+//
+//        // Проверяем, что длина данных кратна размеру int16_t
+//        assert(length % sizeof(int16_t) == 0);
+//
+//        size_t num_samples = length / sizeof(int16_t);
+//        std::vector<float> pcmf32(num_samples);
+//
+//        // Преобразование каждого int16_t значения в float
+//        const int16_t* int16_data = reinterpret_cast<const int16_t*>(data);
+//        for (size_t i = 0; i < num_samples; ++i) {
+//            // Нормализация к диапазону от -1.0 до 1.0
+//            pcmf32[i] = int16_data[i] / static_cast<float>(INT16_MAX);
+//        }
+//
+//        return pcmf32;
+//    } catch (const std::exception& e) {
+//        std::cerr << "Произошла ошибка при чтении байтов от клиента: " << e.what() << std::endl;
+//        return std::vector<float>(); // Возвращаем пустой вектор в случае ошибки
+//    } catch (...) {
+//        std::cerr << "Произошла неизвестная ошибка." << std::endl;
+//        return std::vector<float>(); // Возвращаем пустой вектор в случае неизвестной ошибки
+//    }
+//}
 
 static websocketpp::connection_hdl last_handle;
 /* Отправить клиенту распознанный текст, и сразу же вывести его на экран */
@@ -188,12 +189,17 @@ void whisper_print_usage(int /*argc*/, char ** argv, const whisper_params & para
 }
 
 void on_message(int argc, char ** argv,  server* s, websocketpp::connection_hdl hdl, server::message_ptr msg) {
-    std::vector<float> pcmf32 = read_float_vector(msg);
-//    auto non_null_bytes = std::count_if(pcmf32.begin(), pcmf32.end(), [](float x) { return x != 0; });
-    audio_queue.push(pcmf32);
-    std::cerr <<"    on_message: байты от клиента прочитаны  pcmf32.size= " << pcmf32.size() << std::endl;
-    last_handle = hdl;
-
+    if (got_config) {
+        std::vector<float> pcmf32 = read_float_vector(msg);
+        //    auto non_null_bytes = std::count_if(pcmf32.begin(), pcmf32.end(), [](float x) { return x != 0; });
+        audio_queue.push(pcmf32);
+        std::cerr << "Got a vector of " << pcmf32.size() << " floats." << std::endl;
+        last_handle = hdl;
+    } else {
+        std::string conf(msg->get_payload().c_str());
+        std::cerr << "Got config string " << conf << std::endl;
+        got_config = true;
+    }
 }
 
 
@@ -202,7 +208,6 @@ std::vector<float> get_audio() {
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
     auto vec = audio_queue.front();
-    std::cerr <<"    get_audio(): получены данные из audio_queue.front() vec.size= " << vec.size() << std::endl;
     audio_queue.pop();
     return vec;
 }
@@ -263,8 +268,7 @@ int audio_processing_function(int argc, char ** argv, server * serv) {
             std::cerr <<"    NOT USE VAD   HERE " << std::endl;
             while (true) {
                 pcmf32_new = get_audio();
-                // тут вместо 2*n_samples_step сделал 32*n_samples_step
-                if ((int) pcmf32_new.size() > 32 * n_samples_step) {
+                if ((int) pcmf32_new.size() > 2 * n_samples_step) {
                     fprintf(stderr, "\n\n%s: WARNING: cannot process audio fast enough, dropping audio ...\n\n",
                             __func__);
                     continue;
@@ -318,9 +322,8 @@ int audio_processing_function(int argc, char ** argv, server * serv) {
         }
 
         // run the inference
-
         {
-            std::cerr<< "  run the inference строка 323 " << std::endl;
+            std::cerr <<"   326 строка обработка текста  " << std::endl;
             whisper_full_params wparams = whisper_full_default_params(WHISPER_SAMPLING_GREEDY);
 
             wparams.print_progress = false;
