@@ -72,7 +72,9 @@ async def inputstream_generator(**kwargs):
             indata_float = indata_np.astype(np.float32) / np.iinfo(np.int16).max
             # Получаем байты из indata_float
             bytes_data = indata_float.tobytes()
-            chunk['bytes'] = bytes(indata)
+            # chunk['bytes'] = bytes(indata)
+            chunk['bytes'] = bytes_data
+
             yield chunk
 
 def make_vosk_config_str(framerate=16000, phrase_list=None):
