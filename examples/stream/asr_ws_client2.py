@@ -147,6 +147,12 @@ async def process_asr(m_name, desc, **kwargs):
                         await ws.send(chunk['bytes'])
                         print(f"{len(chunk['bytes'])} байт от клиента на сервер отправлены")
 
+                # 50 - YANDEX
+                elif chunk['asr_model'] == 50:
+                    continue
+                else:
+                    continue
+
                     # Не ждем ответа, продолжаем отправку следующего чанка
 
         except websockets.ConnectionClosed:
