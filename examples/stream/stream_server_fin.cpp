@@ -21,6 +21,10 @@
 #include <websocketpp/client.hpp>
 #include <streambuf>
 
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
+
 bool got_config = false;
 
 using namespace std;
@@ -269,6 +273,21 @@ int audio_processing_function(int argc, char ** argv, server * serv) {
             while (true) {
                 pcmf32_new = get_audio();
                 std::cerr << "get_audio() returned "<< pcmf32_new.size() << " values" << std::endl;
+//                auto greet_text = "greeting";
+// Создаем JSON объект
+                json j;
+                j["text"] = "распознанный текст";
+                j["result"] = json::array({ {{"conf", 0.987654321}, {"end", 1.23}, {"start", 0.56}, {"word", "распознанный"}},
+                                            {{"conf", 0.987654321}, {"end", 2.34}, {"start", 1.23}, {"word", "текст"}} });
+                j["text"] = "распознанный текст";
+
+// Конвертируем JSON объект в строку
+                std::string greet_text = j.dump();
+
+                std::cerr << "Отправляем клиенту greeting текст: " << std::endl;
+
+                send_text(serv, last_handle, greet_text);
+
                 if ((int) pcmf32_new.size() > 2 * n_samples_step) {
                     fprintf(stderr, "\n\n%s: WARNING: cannot process audio fast enough, dropping audio ...\n\n",
                             __func__);
@@ -375,7 +394,18 @@ int audio_processing_function(int argc, char ** argv, server * serv) {
                     const char *text = whisper_full_get_segment_text(ctx, i);
 
                     std::cerr << "Распознанный текст от клиента: " << text << std::endl;
-                    send_text(serv, last_handle, std::string(text));
+
+                    json j;
+                    j["text"] = text; // Присваиваем значение переменной ключу "text"
+                    j["result"] = json::array({
+                                                      {{"conf", 0.987654321}, {"text", "распознанный"}},
+                                                      {{"conf", 0.987654321}, {"text", "текст"}}
+                                              });
+
+                    std::string greet_text = j.dump();
+
+                    send_text(serv, last_handle, greet_text);
+//                    send_text(serv, last_handle, std::string(text));
 //                    std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
                     if (params.no_timestamps) {
