@@ -268,13 +268,14 @@ int audio_processing_function(int argc, char ** argv, server * serv) {
             std::cerr <<"    NOT USE VAD   HERE " << std::endl;
             while (true) {
                 pcmf32_new = get_audio();
+                std::cerr << "get_audio() returned "<< pcmf32_new.size() << " values" << std::endl;
                 if ((int) pcmf32_new.size() > 2 * n_samples_step) {
                     fprintf(stderr, "\n\n%s: WARNING: cannot process audio fast enough, dropping audio ...\n\n",
                             __func__);
                     continue;
                 }
 
-                if ((int) pcmf32_new.size() >= n_samples_step) {
+                if ((int) pcmf32_new.size() >= 0 /* n_samples_step*/) {
                     break;
                 }
 
