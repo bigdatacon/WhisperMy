@@ -294,7 +294,7 @@ int audio_processing_function(int argc, char ** argv, server * serv) {
                     continue;
                 }
 
-                if ((int) pcmf32_new.size() >= 0 /* n_samples_step*/) {
+                if ((int) pcmf32_new.size() >=  n_samples_step) {
                     break;
                 }
 
