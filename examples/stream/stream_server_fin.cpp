@@ -45,7 +45,7 @@ std::vector<float> read_float_vector(server::message_ptr msg) {
 
 //std::vector<float> read_float_vector(websocketpp::server<websocketpp::config::asio>::message_ptr msg) {
 //    try {
-//        std::cerr << "Пытаюсь прочитать байты от клиента" << std::endl;
+////        std::cerr << "Пытаюсь прочитать байты от клиента" << std::endl;
 //        const char* data = msg->get_payload().c_str();
 //        size_t length = msg->get_payload().length();
 //
