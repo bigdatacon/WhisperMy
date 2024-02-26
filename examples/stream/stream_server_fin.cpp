@@ -197,7 +197,7 @@ void on_message(int argc, char ** argv,  server* s, websocketpp::connection_hdl 
         std::vector<float> pcmf32 = read_float_vector(msg);
         //    auto non_null_bytes = std::count_if(pcmf32.begin(), pcmf32.end(), [](float x) { return x != 0; });
         audio_queue.push(pcmf32);
-        std::cerr << "Got a vector of " << pcmf32.size() << " floats." << std::endl;
+//        std::cerr << "Got a vector of " << pcmf32.size() << " floats." << std::endl;
         last_handle = hdl;
     } else {
         std::string conf(msg->get_payload().c_str());
@@ -271,10 +271,21 @@ int audio_processing_function(int argc, char ** argv, server * serv) {
         if (!use_vad) {
             std::cerr <<"    NOT USE VAD   HERE " << std::endl;
             while (true) {
-                pcmf32_new = get_audio();
-                std::cerr << "get_audio() returned "<< pcmf32_new.size() << " values" << std::endl;
+                // собираю байты в буфер(вектор пока его размер меньше n_samples_state)
+                vector<float> pcmf32_new;
+                while (pcmf32_new.size() < n_samples_step) {
+                    auto pcmf32_new_it = get_audio();
+                    // Добавляем элементы в mainVector
+                    pcmf32_new.insert(pcmf32_new.end(), pcmf32_new_it.begin(), pcmf32_new_it.end());
+                }
 
-// Создаем JSON объект
+
+
+
+//                pcmf32_new = get_audio();
+//                std::cerr << "get_audio() returned "<< pcmf32_new.size() << " values" << std::endl;
+//
+//// Создаем JSON объект
 //                json j;
 //                j["text"] = "распознанный текст";
 //                j["result"] = json::array({ {{"conf", 0.987654321}, {"end", 1.23}, {"start", 0.56}, {"word", "распознанный"}},
@@ -287,12 +298,14 @@ int audio_processing_function(int argc, char ** argv, server * serv) {
 //                std::cerr << "Отправляем клиенту greeting текст: " << std::endl;
 //
 //                send_text(serv, last_handle, greet_text);
+                std::cerr <<"A " << pcmf32.size() << " " << count_if(pcmf32.begin(), pcmf32.end(), [](double x) { return x == 0; }) << std::endl;
 
                 if ((int) pcmf32_new.size() > 2 * n_samples_step) {
                     fprintf(stderr, "\n\n%s: WARNING: cannot process audio fast enough, dropping audio ...\n\n",
                             __func__);
                     continue;
                 }
+                std::cerr <<"B " << use_vad << std::endl;
 
                 if ((int) pcmf32_new.size() >= n_samples_step) {
                     break;
