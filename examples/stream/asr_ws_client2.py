@@ -72,8 +72,18 @@ async def inputstream_generator(**kwargs):
             indata_float = indata_np.astype(np.float32) / np.iinfo(np.int16).max
             # Получаем байты из indata_float
             bytes_data = indata_float.tobytes()
-            # chunk['bytes'] = bytes(indata)
             chunk['bytes'] = bytes_data
+
+            # Преобразование indata в массив NumPy
+            # indata_np = np.frombuffer(indata, dtype=np.int16)
+            # # Преобразование данных в float32 и нормализация
+            # indata_float = indata_np.astype(np.float32) / np.iinfo(np.int16).max
+            # # Преобразование массива NumPy в list<float>
+            # indata_list = indata_float.tolist()
+            # chunk['bytes'] = indata_list
+
+            # chunk['bytes'] = bytes(indata)
+
 
             yield chunk
 
