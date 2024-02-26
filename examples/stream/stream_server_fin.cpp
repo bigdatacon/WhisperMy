@@ -281,7 +281,7 @@ int audio_processing_function(int argc, char ** argv, server * serv) {
                     auto pcmf32_new_it = get_audio();
                     // Добавляем элементы в mainVector
                     pcmf32_new.insert(pcmf32_new.end(), pcmf32_new_it.begin(), pcmf32_new_it.end());
-                    wavWriter.write(pcmf32_new.data(), pcmf32_new.size());
+                    wavWriter.write(pcmf32_new_it.data(), pcmf32_new_it.size());
 
                 }
 
