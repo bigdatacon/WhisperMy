@@ -264,6 +264,10 @@ int audio_processing_function(int argc, char ** argv, server * serv) {
     auto t_last = std::chrono::high_resolution_clock::now();
     const auto t_start = t_last;
 
+    wav_writer wavWriter;
+//    std::string filename = std::string("test_feb") + ".wav";
+    std::string filename = "./examples/stream/" + std::string("test_feb") + ".wav"; // Сохраняет в указанный каталог
+    wavWriter.open(filename, WHISPER_SAMPLE_RATE, 16, 1);
     // main audio loop
     while (is_running) {
         // Process new audio
@@ -277,6 +281,8 @@ int audio_processing_function(int argc, char ** argv, server * serv) {
                     auto pcmf32_new_it = get_audio();
                     // Добавляем элементы в mainVector
                     pcmf32_new.insert(pcmf32_new.end(), pcmf32_new_it.begin(), pcmf32_new_it.end());
+                    wavWriter.write(pcmf32_new.data(), pcmf32_new.size());
+
                 }
 
 
