@@ -285,7 +285,7 @@ int audio_processing_function(int argc, char ** argv, server * serv) {
                 }
                 // Подсчет ненулевых элементов в векторе pcmf32
                 size_t non_zero_count_f = std::count_if(pcmf32_new.begin(), pcmf32_new.end(), [](float val) { return val != 0.0f; });
-                std::cerr << "HERE FIRST WRITE IN TEST FEB Non-zero float samples: " << non_zero_count_f << std::endl;
+                std::cerr << "HERE FIRST WRITE IN TEST FEB Non-zero float  in pcmf32_new: " << non_zero_count_f << std::endl;
 
 
 
@@ -334,8 +334,14 @@ int audio_processing_function(int argc, char ** argv, server * serv) {
             }
 
             memcpy(pcmf32.data() + n_samples_take, pcmf32_new.data(), n_samples_new * sizeof(float));
-
+            size_t non_zero_count_f2 = std::count_if(pcmf32.begin(), pcmf32.end(), [](float val) { return val != 0.0f; });
+            std::cerr << "HERE SECOND Non-zero float  in pcmf32 before pcmf32_old = pcmf32 : " << non_zero_count_f2 << std::endl;
             pcmf32_old = pcmf32;
+
+            size_t non_zero_count_f3 = std::count_if(pcmf32.begin(), pcmf32.end(), [](float val) { return val != 0.0f; });
+            std::cerr << "HERE THIRD Non-zero float  in pcmf32  after pcmf32_old = pcmf32: " << non_zero_count_f3 << std::endl;
+
+
         } else {
             std::cerr<< "  HERE USE VAD ! " << std::endl;
             const auto t_now = std::chrono::high_resolution_clock::now();
