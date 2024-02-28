@@ -118,7 +118,7 @@ struct whisper_params {
 
     std::string language  = "en";
     std::string model     = "models/ggml-base.en.bin";
-    //    std::string model     = "models/ggml-base.bin";
+//        std::string model     = "models/ggml-base.bin";
     std::string fname_out;
 };
 
@@ -226,9 +226,11 @@ int audio_processing_function(int argc, char ** argv, server * serv) {
     params.keep_ms = std::min(params.keep_ms, params.step_ms);
     params.length_ms = std::max(params.length_ms, params.step_ms);
 
-    const int n_samples_step = (1e-3 * params.step_ms) * WHISPER_SAMPLE_RATE*2;
+//    const int n_samples_step = (1e-3 * params.step_ms) * WHISPER_SAMPLE_RATE*2;
+    const int n_samples_step = (1e-3 * params.step_ms) * WHISPER_SAMPLE_RATE;
     const int n_samples_len = (1e-3 * params.length_ms) * WHISPER_SAMPLE_RATE;
     const int n_samples_keep = (1e-3 * params.keep_ms) * WHISPER_SAMPLE_RATE;
+//    const int n_samples_keep = 480000;
     const int n_samples_30s = (1e-3 * 30000.0) * WHISPER_SAMPLE_RATE;
 
     const bool use_vad = n_samples_step <= 0; // sliding window mode uses VAD
@@ -287,22 +289,6 @@ int audio_processing_function(int argc, char ** argv, server * serv) {
                     wavWriter.write(pcmf32_new_it.data(), pcmf32_new_it.size());
                 }
 
-                //                pcmf32_new = get_audio();
-                //                std::cerr << "get_audio() returned "<< pcmf32_new.size() << " values" << std::endl;
-                //
-                //// Создаем JSON объект
-                //                json j;
-                //                j["text"] = "распознанный текст";
-                //                j["result"] = json::array({ {{"conf", 0.987654321}, {"end", 1.23}, {"start", 0.56}, {"word", "распознанный"}},
-                //                                            {{"conf", 0.987654321}, {"end", 2.34}, {"start", 1.23}, {"word", "текст"}} });
-                //                j["text"] = "распознанный текст";
-                //
-                //// Конвертируем JSON объект в строку
-                //                std::string greet_text = j.dump();
-                //
-                //                std::cerr << "Отправляем клиенту greeting текст: " << std::endl;
-                //
-                //                send_text(serv, last_handle, greet_text);
                 std::cerr <<"A " << pcmf32.size() << " " << count_if(pcmf32.begin(), pcmf32.end(), [](double x) { return x == 0; }) << std::endl;
 
                 if ((int) pcmf32_new_t.size() > 2 * n_samples_step) {
@@ -313,6 +299,8 @@ int audio_processing_function(int argc, char ** argv, server * serv) {
                 std::cerr <<"B " << use_vad << std::endl;
 
                 if ((int) pcmf32_new_t.size() >= n_samples_step) {
+                    pcmf32_new = pcmf32_new_t;
+                    std::cerr <<" pcmf32_new 0:  " << pcmf32_new.size() << " " << count_if(pcmf32_new.begin(), pcmf32_new.end(), [](double x) { return x != 0.0f; }) << std::endl;
                     break;
                 }
 
@@ -322,7 +310,12 @@ int audio_processing_function(int argc, char ** argv, server * serv) {
                 // присваиваю pcmf32_new значение pcmf32_new_t
 
                 pcmf32_new = pcmf32_new_t;
+                std::cerr <<" pcmf32_new 00:  " << pcmf32_new.size() << " " << count_if(pcmf32_new.begin(), pcmf32_new.end(), [](double x) { return x != 0.0f; }) << std::endl;
+
             }
+            std::cerr <<" pcmf32_new 1:  " << pcmf32_new.size() << " " << count_if(pcmf32_new.begin(), pcmf32_new.end(), [](double x) { return x != 0.0f; }) << std::endl;
+
+
             std::cerr <<" 1 " << pcmf32.size() << " " << count_if(pcmf32.begin(), pcmf32.end(), [](double x) { return x != 0.0f; }) << std::endl;
 
 
@@ -331,6 +324,8 @@ int audio_processing_function(int argc, char ** argv, server * serv) {
             // take up to params.length_ms audio from previous iteration
             const int n_samples_take = std::min((int) pcmf32_old.size(),
                                                 std::max(0, n_samples_keep + n_samples_len - n_samples_new));
+
+//            const int n_samples_take =480000;
 
             std::cerr <<" 1.2  n_samples_take = " << n_samples_take << std::endl;
             std::cerr <<" 1.3  n_samples_keep + n_samples_len - n_samples_new = " << n_samples_keep + n_samples_len - n_samples_new << std::endl;
@@ -346,6 +341,7 @@ int audio_processing_function(int argc, char ** argv, server * serv) {
             }
             std::cerr <<" 4 " << pcmf32.size() << " " << count_if(pcmf32.begin(), pcmf32.end(), [](double x) { return x != 0.0f; }) << std::endl;
 
+            std::cerr <<" pcmf32_new 2:  " << pcmf32_new.size() << " " << count_if(pcmf32_new.begin(), pcmf32_new.end(), [](double x) { return x != 0.0f; }) << std::endl;
 
             memcpy(pcmf32.data() + n_samples_take, pcmf32_new.data(), n_samples_new * sizeof(float));
 
