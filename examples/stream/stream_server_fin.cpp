@@ -34,43 +34,43 @@
     std::queue<std::vector<float>> audio_queue;
 
     /* Считать вектор вещественных чисел из сообщения от клиента */
-    //std::vector<float> read_float_vector(server::message_ptr msg) {
-    //    const char* data = msg->get_payload().c_str();
-    //    size_t length = msg->get_payload().length();
-    //
-    //    std::vector<float> pcmf32(reinterpret_cast<const float *>(data),
-    //                              reinterpret_cast<const float *>(data + length));
-    //    return pcmf32;
-    //}
+    std::vector<float> read_float_vector(server::message_ptr msg) {
+        const char* data = msg->get_payload().c_str();
+        size_t length = msg->get_payload().length();
 
-    std::vector<float> read_float_vector(websocketpp::server<websocketpp::config::asio>::message_ptr msg) {
-        try {
-    //        std::cerr << "Пытаюсь прочитать байты от клиента" << std::endl;
-            const char* data = msg->get_payload().c_str();
-            size_t length = msg->get_payload().length();
-
-            // Проверяем, что длина данных кратна размеру int16_t
-            assert(length % sizeof(int16_t) == 0);
-
-            size_t num_samples = length / sizeof(int16_t);
-            std::vector<float> pcmf32(num_samples);
-
-            // Преобразование каждого int16_t значения в float
-            const int16_t* int16_data = reinterpret_cast<const int16_t*>(data);
-            for (size_t i = 0; i < num_samples; ++i) {
-                // Нормализация к диапазону от -1.0 до 1.0
-                pcmf32[i] = int16_data[i] / static_cast<float>(INT16_MAX);
-            }
-
-            return pcmf32;
-        } catch (const std::exception& e) {
-            std::cerr << "Произошла ошибка при чтении байтов от клиента: " << e.what() << std::endl;
-            return std::vector<float>(); // Возвращаем пустой вектор в случае ошибки
-        } catch (...) {
-            std::cerr << "Произошла неизвестная ошибка." << std::endl;
-            return std::vector<float>(); // Возвращаем пустой вектор в случае неизвестной ошибки
-        }
+        std::vector<float> pcmf32(reinterpret_cast<const float *>(data),
+                                  reinterpret_cast<const float *>(data + length));
+        return pcmf32;
     }
+
+//    std::vector<float> read_float_vector(websocketpp::server<websocketpp::config::asio>::message_ptr msg) {
+//        try {
+//    //        std::cerr << "Пытаюсь прочитать байты от клиента" << std::endl;
+//            const char* data = msg->get_payload().c_str();
+//            size_t length = msg->get_payload().length();
+//
+//            // Проверяем, что длина данных кратна размеру int16_t
+//            assert(length % sizeof(int16_t) == 0);
+//
+//            size_t num_samples = length / sizeof(int16_t);
+//            std::vector<float> pcmf32(num_samples);
+//
+//            // Преобразование каждого int16_t значения в float
+//            const int16_t* int16_data = reinterpret_cast<const int16_t*>(data);
+//            for (size_t i = 0; i < num_samples; ++i) {
+//                // Нормализация к диапазону от -1.0 до 1.0
+//                pcmf32[i] = int16_data[i] / static_cast<float>(INT16_MAX);
+//            }
+//
+//            return pcmf32;
+//        } catch (const std::exception& e) {
+//            std::cerr << "Произошла ошибка при чтении байтов от клиента: " << e.what() << std::endl;
+//            return std::vector<float>(); // Возвращаем пустой вектор в случае ошибки
+//        } catch (...) {
+//            std::cerr << "Произошла неизвестная ошибка." << std::endl;
+//            return std::vector<float>(); // Возвращаем пустой вектор в случае неизвестной ошибки
+//        }
+//    }
 
     static websocketpp::connection_hdl last_handle;
     /* Отправить клиенту распознанный текст, и сразу же вывести его на экран */
