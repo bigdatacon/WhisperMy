@@ -268,6 +268,8 @@
     //    std::string filename = std::string("test_feb") + ".wav";
         std::string filename = "./examples/stream/" + std::string("test_feb") + ".wav"; // Сохраняет в указанный каталог
         wavWriter.open(filename, WHISPER_SAMPLE_RATE, 16, 1);
+        std::cerr <<"BEFORE ALL " << pcmf32.size() << " " << count_if(pcmf32.begin(), pcmf32.end(), [](double x) { return x == 0; }) << std::endl;
+
         // main audio loop
         while (is_running) {
             // Process new audio
@@ -320,6 +322,8 @@
 
                     std::this_thread::sleep_for(std::chrono::milliseconds(1));
                 }
+                size_t non_zero_count_f00 = std::count_if(pcmf32.begin(), pcmf32.end(), [](float val) { return val != 0.0f; });
+                std::cerr << "HERE one Non-zero float  in pcmf32 before all: " << non_zero_count_f00 << std::endl;
 
                 const int n_samples_new = pcmf32_new.size();
 
