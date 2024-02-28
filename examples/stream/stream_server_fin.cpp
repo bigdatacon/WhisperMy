@@ -332,7 +332,8 @@ int audio_processing_function(int argc, char ** argv, server * serv) {
             for (int i = 0; i < n_samples_take; i++) {
                 pcmf32[i] = pcmf32_old[pcmf32_old.size() - n_samples_take + i];
             }
-
+            size_t non_zero_count_f0 = std::count_if(pcmf32.begin(), pcmf32.end(), [](float val) { return val != 0.0f; });
+            std::cerr << "HERE zero Non-zero float  in pcmf32 before memcpy : " << non_zero_count_f0 << std::endl;
             memcpy(pcmf32.data() + n_samples_take, pcmf32_new.data(), n_samples_new * sizeof(float));
             size_t non_zero_count_f2 = std::count_if(pcmf32.begin(), pcmf32.end(), [](float val) { return val != 0.0f; });
             std::cerr << "HERE SECOND Non-zero float  in pcmf32 before pcmf32_old = pcmf32 : " << non_zero_count_f2 << std::endl;
