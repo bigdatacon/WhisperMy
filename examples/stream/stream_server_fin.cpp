@@ -278,11 +278,12 @@ int audio_processing_function(int argc, char ** argv, server * serv) {
             std::cerr <<"    NOT USE VAD   HERE " << std::endl;
             while (true) {
                 // собираю байты в буфер(вектор пока его размер меньше n_samples_state)
-                vector<float> pcmf32_new;
-                while (pcmf32_new.size() < n_samples_step) {
+//                vector<float> pcmf32_new(n_samples_30s, 0.0f);
+                vector<float> pcmf32_new_t;
+                while (pcmf32_new_t.size() < n_samples_step) {
                     auto pcmf32_new_it = get_audio();
                     // Добавляем элементы в mainVector
-                    pcmf32_new.insert(pcmf32_new.end(), pcmf32_new_it.begin(), pcmf32_new_it.end());
+                    pcmf32_new_t.insert(pcmf32_new_t.end(), pcmf32_new_it.begin(), pcmf32_new_it.end());
                     wavWriter.write(pcmf32_new_it.data(), pcmf32_new_it.size());
                 }
 
@@ -304,20 +305,23 @@ int audio_processing_function(int argc, char ** argv, server * serv) {
                 //                send_text(serv, last_handle, greet_text);
                 std::cerr <<"A " << pcmf32.size() << " " << count_if(pcmf32.begin(), pcmf32.end(), [](double x) { return x == 0; }) << std::endl;
 
-                if ((int) pcmf32_new.size() > 2 * n_samples_step) {
+                if ((int) pcmf32_new_t.size() > 2 * n_samples_step) {
                     fprintf(stderr, "\n\n%s: WARNING: cannot process audio fast enough, dropping audio ...\n\n",
                             __func__);
                     continue;
                 }
                 std::cerr <<"B " << use_vad << std::endl;
 
-                if ((int) pcmf32_new.size() >= n_samples_step) {
+                if ((int) pcmf32_new_t.size() >= n_samples_step) {
                     break;
                 }
 
                 std::this_thread::sleep_for(std::chrono::milliseconds(1));
                 std::cerr <<" 0 " << pcmf32.size() << " " << count_if(pcmf32.begin(), pcmf32.end(), [](double x) { return x != 0.0f; }) << std::endl;
 
+                // присваиваю pcmf32_new значение pcmf32_new_t
+
+                pcmf32_new = pcmf32_new_t;
             }
             std::cerr <<" 1 " << pcmf32.size() << " " << count_if(pcmf32.begin(), pcmf32.end(), [](double x) { return x != 0.0f; }) << std::endl;
 
@@ -327,6 +331,10 @@ int audio_processing_function(int argc, char ** argv, server * serv) {
             // take up to params.length_ms audio from previous iteration
             const int n_samples_take = std::min((int) pcmf32_old.size(),
                                                 std::max(0, n_samples_keep + n_samples_len - n_samples_new));
+
+            std::cerr <<" 1.2  n_samples_take = " << n_samples_take << std::endl;
+            std::cerr <<" 1.3  n_samples_keep + n_samples_len - n_samples_new = " << n_samples_keep + n_samples_len - n_samples_new << std::endl;
+
             std::cerr <<" 2 " << pcmf32.size() << " " << count_if(pcmf32.begin(), pcmf32.end(), [](double x) { return x != 0.0f; }) << std::endl;
 
             pcmf32.resize(n_samples_new + n_samples_take);
