@@ -252,6 +252,10 @@ int audio_processing_function(int argc, char ** argv, server * serv) {
             // take up to params.length_ms audio from previous iteration
             const int n_samples_take = std::min((int) pcmf32_old.size(),
                                                 std::max(0, n_samples_keep + n_samples_len - n_samples_new));
+
+            std::cerr <<" 1.2  n_samples_take = " << n_samples_take << std::endl;
+            std::cerr <<" 1.3  n_samples_keep + n_samples_len - n_samples_new = " << n_samples_keep + n_samples_len - n_samples_new << std::endl;
+
             std::cerr <<" 2 " << pcmf32.size() << " " << count_if(pcmf32.begin(), pcmf32.end(), [](double x) { return x != 0.0f; }) << std::endl;
 
             pcmf32.resize(n_samples_new + n_samples_take);
