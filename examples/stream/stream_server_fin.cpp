@@ -282,9 +282,10 @@ int audio_processing_function(int argc, char ** argv, server * serv) {
                     // Добавляем элементы в mainVector
                     pcmf32_new.insert(pcmf32_new.end(), pcmf32_new_it.begin(), pcmf32_new_it.end());
                     wavWriter.write(pcmf32_new_it.data(), pcmf32_new_it.size());
-
                 }
-
+                // Подсчет ненулевых элементов в векторе pcmf32
+                size_t non_zero_count_f = std::count_if(pcmf32_new.begin(), pcmf32_new.end(), [](float val) { return val != 0.0f; });
+                std::cerr << "HERE FIRST WRITE IN TEST FEB Non-zero float samples: " << non_zero_count_f << std::endl;
 
 
 
@@ -384,11 +385,32 @@ int audio_processing_function(int argc, char ** argv, server * serv) {
 
             wparams.prompt_tokens = params.no_context ? nullptr : prompt_tokens.data();
             wparams.prompt_n_tokens = params.no_context ? 0 : prompt_tokens.size();
-
             {
                 static int call_count = 1;
 
                 std::string filename = "./examples/stream/chunk-"  + std::to_string(call_count) + std::string(".wav");
+                {
+                    // Проверка и логирование размера данных и состояния wavWriter перед записью
+                    std::cerr << "Preparing to write audio chunk #" << call_count << std::endl;
+                    std::cerr << "Filename: " << filename << std::endl;
+                    std::cerr << "Data size: " << pcmf32.size() << " float samples" << std::endl;
+                    std::cerr << "Sample rate: " << WHISPER_SAMPLE_RATE << ", Bits per sample: 16, Channels: 1" << std::endl;
+
+                    // Подсчет ненулевых элементов в векторе pcmf32
+                    size_t non_zero_count = std::count_if(pcmf32.begin(), pcmf32.end(), [](float val) { return val != 0.0f; });
+                    std::cerr << "Non-zero float samples: " << non_zero_count << std::endl;
+                    // Проверка наличия данных
+                    if(pcmf32.empty()) {
+                        std::cerr << "Warning: No data to write for chunk #" << call_count << std::endl;
+                    }
+
+                    // Проверка, что размер данных соответствует ожидаемому для записи
+                    if(pcmf32.size() < n_samples_step) {
+                        std::cerr << "Warning: Data size for chunk #" << call_count << " is less than expected n_samples_step: " << n_samples_step << std::endl;
+                    }
+
+                    // Дополнительные проверки можно добавить по необходимости
+                }
 
                 call_count++;
                 wav_writer writer;
