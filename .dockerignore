@@ -1,9 +1,9 @@
-# Исключаем все из папки examples/stream/vosk
-examples/stream/vosk/**
-
-# Исключаем все .bin файлы из папки models
-models/**/*.bin
-
-# Переопределяем исключение для ggml-base.bin и ggml-base.en.bin
-!models/ggml-base.bin
-!models/ggml-base.en.bin
+## Исключаем все из папки examples/stream/vosk
+#examples/stream/vosk/**
+#
+## Исключаем все .bin файлы из папки models
+#models/**/*.bin
+#
+## Переопределяем исключение для ggml-base.bin и ggml-base.en.bin
+#!models/ggml-base.bin
+#!models/ggml-base.en.bin
