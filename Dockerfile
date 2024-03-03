@@ -26,7 +26,7 @@ RUN chmod +x ./stream_server_fin
 
 # Запуск сервера
 # Исправлен путь запуска сервера, используя обновленное расположение исполняемого файла
-CMD ["sh", "-c", "./stream_server_fin > /dev/null"]
+CMD ["sh", "-c", "./stream_server_fin >  /dev/null"]
 
 
 #docker build . -t whisper
