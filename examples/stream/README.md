@@ -1,5 +1,20 @@
 # stream_server and stream_client  
 # Внимание, звук пишется только с микрофона, если отключить микрофон и пользоваться встроенным динамиком - записи не будет  
+# Запуск клиента python(vosk - asr_ws_client.py) и сервера whisper 
+## в докере:  
+### в корневом каталоге проекта (порт 9002 должен совпадать с портом указанным в клиенте питон) :   
+#docker build . -t whisper
+#docker run --name whisper -p 9002:9002 whisper
+
+## без исопльзования докера:  
+### в корневом каталоге проекта :   
+make clean  
+make stream_client_docker
+./stream_server_docker > -vth > /dev/null 
+### в папке examples/stream :     
+python asr_ws_client.py --host ws://localhost:9002 --show_devices true
+
+# Запуск клиента whisper и сервера whisper без докера  
 ## в корневом каталоге проекта :  
 make clean  
 make stream_client_fin  
