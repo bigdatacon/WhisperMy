@@ -18,15 +18,18 @@ WORKDIR /app
 COPY . .
 
 # Сборка сервера
-RUN make clean && make stream_server_fin
+RUN make clean && make stream_server_docker
 
 # Устанавливаем права на выполнение для исполняемого файла
 # Исправлен путь к исполняемому файлу, теперь он находится в корне /app
-RUN chmod +x ./stream_server_fin
+RUN chmod +x ./stream_server_docker
 
 # Запуск сервера
 # Исправлен путь запуска сервера, используя обновленное расположение исполняемого файла
-CMD ["sh", "-c", "./stream_server_fin >  /dev/null"]
+#CMD ["sh", "-c", "./stream_server_fin >  /dev/null"]
+#CMD ["sh", "-c", "./stream_server_fin > -vth 0.9 > /dev/null"]
+CMD ["./stream_server_docker", "-vth", "0.9"]
+
 
 
 #docker build . -t whisper
