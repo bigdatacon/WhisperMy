@@ -38,9 +38,9 @@ endif
 # Compile flags
 #
 
-CFLAGS   = -I.              -O3 -DNDEBUG -std=c11   -fPIC
-CXXFLAGS = -I. -I./examples -O3 -DNDEBUG -std=c++11 -fPIC
-LDFLAGS  =
+CFLAGS   = -I.              -O3 -DNDEBUG -std=c11   -fPIC -g
+CXXFLAGS = -I. -I./examples -O3 -DNDEBUG -std=c++11 -fPIC -g
+LDFLAGS  = -g
 
 # clock_gettime came in POSIX.1b (1993)
 # CLOCK_MONOTONIC came in POSIX.1-2001 / SUSv3 as optional
@@ -377,6 +377,9 @@ stream_server: examples/stream/stream_server.cpp $(SRC_COMMON) $(SRC_COMMON_SDL)
 
 stream_server_test: examples/stream/stream_server_test.cpp $(SRC_COMMON) $(SRC_COMMON_SDL) $(WHISPER_OBJ)
 	$(CXX) $(CXXFLAGS) examples/stream/stream_server_test.cpp $(SRC_COMMON) $(SRC_COMMON_SDL) $(WHISPER_OBJ) -o stream_server_test $(CC_SDL) $(LDFLAGS)
+
+stream_server_docker: examples/stream/stream_server_docker.cpp $(SRC_COMMON) $(SRC_COMMON_SDL) $(WHISPER_OBJ)
+	$(CXX) $(CXXFLAGS) examples/stream/stream_server_docker.cpp $(SRC_COMMON) $(SRC_COMMON_SDL) $(WHISPER_OBJ) -o stream_server_docker $(CC_SDL) $(LDFLAGS)
 
 stream_server_fin: examples/stream/stream_server_fin.cpp $(SRC_COMMON) $(SRC_COMMON_SDL) $(WHISPER_OBJ)
 	$(CXX) $(CXXFLAGS) examples/stream/stream_server_fin.cpp $(SRC_COMMON) $(SRC_COMMON_SDL) $(WHISPER_OBJ) -o stream_server_fin $(CC_SDL) $(LDFLAGS)
