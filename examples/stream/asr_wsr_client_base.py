@@ -43,46 +43,21 @@ def show_devices(**kwargs):
             kwargs['device_out'] = int(device_out_)
     return kwargs['device_in'], kwargs['device_out']
 
-# async def inputstream_generator(**kwargs):
-#     queue_to_ws = asyncio.Queue()
-#     loop = asyncio.get_event_loop()
-#
-#     def callback_in_raw(indata, frame_count, time_info, status):
-#         loop.call_soon_threadsafe(queue_to_ws.put_nowait, (indata, status))
-#
-#     rec_stream = sd.RawInputStream(device=kwargs['device_in'],
-#                                    channels=kwargs['channels_in'],
-#                                    samplerate=kwargs['samplerate_in'],
-#                                    dtype='int16',
-#                                    # dtype='float32',
-#                                    blocksize=kwargs['chunksize_in'],
-#                                    callback=callback_in_raw,
-#                                    )
-#
-#     chunk = {'asr_model': 60,
-#              'reset_flg': False,
-#              'bytes': b''}
-#
-#     with rec_stream:
-#         while True:
-#             indata, status = await queue_to_ws.get()
-#             chunk['bytes'] = bytes(indata)
-#             yield chunk
-
-
 async def inputstream_generator(**kwargs):
     queue_to_ws = asyncio.Queue()
     loop = asyncio.get_event_loop()
 
-    def callback_in(indata, frame_count, time_info, status):
-        loop.call_soon_threadsafe(queue_to_ws.put_nowait, (indata.copy(), status))
+    def callback_in_raw(indata, frame_count, time_info, status):
+        loop.call_soon_threadsafe(queue_to_ws.put_nowait, (indata, status))
 
-    rec_stream = sd.InputStream(device=kwargs['device_in'],
-                                channels=kwargs['channels_in'],
-                                samplerate=kwargs['samplerate_in'],
-                                dtype='float32',  # Изменено на float32
-                                blocksize=kwargs['chunksize_in'],
-                                callback=callback_in)
+    rec_stream = sd.RawInputStream(device=kwargs['device_in'],
+                                   channels=kwargs['channels_in'],
+                                   samplerate=kwargs['samplerate_in'],
+                                   dtype='int16',
+                                   # dtype='float32',
+                                   blocksize=kwargs['chunksize_in'],
+                                   callback=callback_in_raw,
+                                   )
 
     chunk = {'asr_model': 60,
              'reset_flg': False,
@@ -91,13 +66,26 @@ async def inputstream_generator(**kwargs):
     with rec_stream:
         while True:
             indata, status = await queue_to_ws.get()
+            # # Преобразование indata в массив NumPy
+            # indata_np = np.frombuffer(indata, dtype=np.int16)
+            # # Преобразование данных в float32 и нормализация
+            # indata_float = indata_np.astype(np.float32) / np.iinfo(np.int16).max
+            # # Получаем байты из indata_float
+            # bytes_data = indata_float.tobytes()
+            # chunk['bytes'] = bytes_data
 
-            # Данные уже в формате float32 и нормализованы от -1.0 до 1.0
-            bytes_data = indata.tobytes()
-            chunk['bytes'] = bytes_data
+            # Преобразование indata в массив NumPy
+            # indata_np = np.frombuffer(indata, dtype=np.int16)
+            # # Преобразование данных в float32 и нормализация
+            # indata_float = indata_np.astype(np.float32) / np.iinfo(np.int16).max
+            # # Преобразование массива NumPy в list<float>
+            # indata_list = indata_float.tolist()
+            # chunk['bytes'] = indata_list
+
+            chunk['bytes'] = bytes(indata)
+
 
             yield chunk
-
 
 def make_vosk_config_str(framerate=16000, phrase_list=None):
     if phrase_list is None \
