@@ -74,6 +74,7 @@ std::vector<float> read_float_vector(websocketpp::server<websocketpp::config::as
 }
 
 
+
 void write_answer(const std::string & text) {
     output_queue.push(text);
 }
