@@ -32,6 +32,7 @@ using namespace std;
 typedef websocketpp::server<websocketpp::config::asio> server;
 
 std::queue<std::vector<float>> audio_queue;
+std::queue<std::string> output_queue;
 
 /* Считать вектор вещественных чисел из сообщения от клиента */
 //std::vector<float> read_float_vector(server::message_ptr msg) {
@@ -42,31 +43,6 @@ std::queue<std::vector<float>> audio_queue;
 //                              reinterpret_cast<const float *>(data + length));
 //    return pcmf32;
 //}
-
-//std::vector<float> read_float_vector(websocketpp::server<websocketpp::config::asio>::message_ptr msg) {
-//    try {
-//        const char* data = msg->get_payload().c_str();
-//        size_t length = msg->get_payload().length();
-//
-//        // Проверка на нулевой указатель, если data является nullptr
-//        if (data == nullptr) {
-//            throw std::logic_error("Data pointer is null");
-//        }
-//
-//        std::vector<float> pcmf32(reinterpret_cast<const float *>(data),
-//                                  reinterpret_cast<const float *>(data + length));
-//        return pcmf32;
-//    } catch (const std::exception& e) {
-//        // Обработка стандартных исключений
-//        std::cerr << "Exception caught in read_float_vector: " << e.what() << std::endl;
-//        return std::vector<float>(); // Возвращаем пустой вектор в случае исключения
-//    } catch (...) {
-//        // Обработка нестандартных исключений
-//        std::cerr << "Unknown exception caught in read_float_vector" << std::endl;
-//        return std::vector<float>(); // Возвращаем пустой вектор в случае неизвестного исключения
-//    }
-//}
-
 
 std::vector<float> read_float_vector(websocketpp::server<websocketpp::config::asio>::message_ptr msg) {
     try {
@@ -96,6 +72,12 @@ std::vector<float> read_float_vector(websocketpp::server<websocketpp::config::as
         return std::vector<float>(); // Возвращаем пустой вектор в случае неизвестной ошибки
     }
 }
+
+
+void write_answer(const std::string & text) {
+    output_queue.push(text);
+}
+
 
 static websocketpp::connection_hdl last_handle;
 /* Отправить клиенту распознанный текст, и сразу же вывести его на экран */
@@ -141,11 +123,9 @@ struct whisper_params {
     bool save_audio    = false; // save audio to wav file
     bool use_gpu       = true;
 
-//    std::string language  = "en";
     std::string language  = "ru";
 //    std::string model     = "models/ggml-base.en.bin";
     std::string model     = "models/ggml-base.bin";
-//    std::string model     = "models/ggml-medium.bin";
     std::string fname_out;
 };
 
@@ -219,12 +199,31 @@ void whisper_print_usage(int /*argc*/, char ** argv, const whisper_params & para
     fprintf(stderr, "\n");
 }
 
+std::string convert_answer(const std::string &text) {
+    json j;
+    j["text"] = text; // Присваиваем значение переменной ключу "text"
+    j["result"] = json::array(
+            {
+                    {{"conf", 0.987654321}, {"text", "распознанный"}},
+                    {{"conf", 0.987654321}, {"text", "текст"}}
+            }
+    );
+
+    return j.dump();
+}
+
 void on_message(int argc, char ** argv,  server* s, websocketpp::connection_hdl hdl, server::message_ptr msg) {
     if (got_config) {
         std::vector<float> pcmf32 = read_float_vector(msg);
         //    auto non_null_bytes = std::count_if(pcmf32.begin(), pcmf32.end(), [](float x) { return x != 0; });
         audio_queue.push(pcmf32);
         //        std::cerr << "Got a vector of " << pcmf32.size() << " floats." << std::endl;
+        if (output_queue.empty()) {
+            send_text(s, hdl, convert_answer(""));
+        } else {
+            send_text(s, hdl, convert_answer(output_queue.front()));
+            output_queue.pop();
+        }
         last_handle = hdl;
     } else {
         std::string conf(msg->get_payload().c_str());
@@ -244,7 +243,7 @@ std::vector<float> get_audio() {
 }
 
 
-int audio_processing_function(int argc, char ** argv, server * serv) {
+int audio_processing_function(int argc, char ** argv) {
     whisper_params params;
     if (whisper_params_parse(argc, argv, params) == false) {
         return 1;
@@ -458,39 +457,21 @@ int audio_processing_function(int argc, char ** argv, server * serv) {
 
                     // Дополнительные проверки можно добавить по необходимости
                 }
-                std::cerr << "Дошел до записи " << std::endl;
-                try {
-                    call_count++;
-                    wav_writer writer;
-                    writer.open(filename, WHISPER_SAMPLE_RATE, 16, 1);
-                    writer.write(pcmf32.data(), pcmf32.size());
-                    writer.close();
-                } catch (const std::exception& e) {
-                    std::cerr << "Exception caught while writing audio chunk: " << e.what() << std::endl;
-                } catch (...) {
-                    std::cerr << "Unknown exception caught while writing audio chunk." << std::endl;
-                }
 
+                call_count++;
+                wav_writer writer;
+                writer.open(filename, WHISPER_SAMPLE_RATE, 16, 1);
+                writer.write(pcmf32.data(), pcmf32.size());
+                writer.close();
             }
 
-            std::cerr << "все записал в файл" << std::endl;
-
-            try {
-                if (whisper_full(ctx, wparams, pcmf32.data(), pcmf32.size()) != 0) {
-                    fprintf(stderr, "%s: failed to process audio\n", argv[0]);
-                    return 6;
-                }
-            } catch (const std::exception& e) {
-                std::cerr << "Exception caught during audio processing: " << e.what() << std::endl;
-                return 6; // Or handle the error as appropriate
-            } catch (...) {
-                std::cerr << "Unknown exception caught during audio processing." << std::endl;
-                return 6; // Or handle the error as appropriate
+            if (whisper_full(ctx, wparams, pcmf32.data(), pcmf32.size()) != 0) {
+                fprintf(stderr, "%s: failed to process audio\n", argv[0]);
+                return 6;
             }
 
-            std::cerr << "перешел к print results << std::endl" << std::endl;
-
-            try {
+            // print result;
+            {
                 if (!use_vad) {
                     printf("\33[2K\r");
 
@@ -513,19 +494,8 @@ int audio_processing_function(int argc, char ** argv, server * serv) {
 
                     std::cerr << "Распознанный текст от клиента: " << text << std::endl;
 
-                    json j;
-                    j["text"] = text; // Присваиваем значение переменной ключу "text"
-                    j["result"] = json::array({
-                                                      {{"conf", 0.987654321}, {"text", "распознанный"}},
-                                                      {{"conf", 0.987654321}, {"text", "текст"}}
-                                              });
 
-                    std::string greet_text = j.dump();
-
-                    send_text(serv, last_handle, greet_text);
-                    //                    send_text(serv, last_handle, std::string(text));
-                    //                    std::this_thread::sleep_for(std::chrono::milliseconds(10));
-
+                    write_answer(text);
                     if (params.no_timestamps) {
                         printf("%s", text);
                         fflush(stdout);
@@ -549,74 +519,7 @@ int audio_processing_function(int argc, char ** argv, server * serv) {
                     printf("\n");
                     printf("### Transcription %d END\n", n_iter);
                 }
-            } catch (const std::exception& e) {
-                std::cerr << "Exception caught during result processing: " << e.what() << std::endl;
-            } catch (...) {
-                std::cerr << "Unknown exception caught during result processing." << std::endl;
             }
-
-
-            // print result;
-//            {
-//                if (!use_vad) {
-//                    printf("\33[2K\r");
-//
-//                    // print long empty line to clear the previous line
-//                    printf("%s", std::string(100, ' ').c_str());
-//
-//                    printf("\33[2K\r");
-//                } else {
-//                    const int64_t t1 = (t_last - t_start).count() / 1000000;
-//                    const int64_t t0 = std::max(0.0, t1 - pcmf32.size() * 1000.0 / WHISPER_SAMPLE_RATE);
-//
-//                    printf("\n");
-//                    printf("### Transcription %d START | t0 = %d ms | t1 = %d ms\n", n_iter, (int) t0, (int) t1);
-//                    printf("\n");
-//                }
-//
-//                const int n_segments = whisper_full_n_segments(ctx);
-//                for (int i = 0; i < n_segments; ++i) {
-//                    const char *text = whisper_full_get_segment_text(ctx, i);
-//
-//                    std::cerr << "Распознанный текст от клиента: " << text << std::endl;
-//
-//                    json j;
-//                    j["text"] = text; // Присваиваем значение переменной ключу "text"
-//                    j["result"] = json::array({
-//                                                      {{"conf", 0.987654321}, {"text", "распознанный"}},
-//                                                      {{"conf", 0.987654321}, {"text", "текст"}}
-//                                              });
-//
-//                    std::string greet_text = j.dump();
-//
-//                    send_text(serv, last_handle, greet_text);
-//                    //                    send_text(serv, last_handle, std::string(text));
-//                    //                    std::this_thread::sleep_for(std::chrono::milliseconds(10));
-//
-//                    if (params.no_timestamps) {
-//                        printf("%s", text);
-//                        fflush(stdout);
-//
-//                    } else {
-//                        const int64_t t0 = whisper_full_get_segment_t0(ctx, i);
-//                        const int64_t t1 = whisper_full_get_segment_t1(ctx, i);
-//
-//                        std::string output = "[" + to_timestamp(t0) + " --> " + to_timestamp(t1) + "]  " + text;
-//
-//                        if (whisper_full_get_segment_speaker_turn_next(ctx, i)) {
-//                            output += " [SPEAKER_TURN]";
-//                        }
-//                        output += "\n";
-//                        printf("%s", output.c_str());
-//                        fflush(stdout);
-//                    }
-//                }
-//
-//                if (use_vad) {
-//                    printf("\n");
-//                    printf("### Transcription %d END\n", n_iter);
-//                }
-//            }
 
             ++n_iter;
 
@@ -639,17 +542,7 @@ int audio_processing_function(int argc, char ** argv, server * serv) {
                     }
                 }
             }
-            std::cerr << "ВНИМАЕНИЕ Очищаю буфер и все остальное: " << std::endl;
             fflush(stdout);
-
-//            whisper_print_timings(ctx);
-//            whisper_free(ctx);
-//            if (ctx != nullptr) {
-//                whisper_free(ctx);
-//                ctx = nullptr; // Обнулите указатель после освобождения, чтобы избежать повторного использования.
-//            }
-
-
         }
     }
 
@@ -678,7 +571,7 @@ int main(int argc, char ** argv) {
         echo_server.run();
     });
 
-    audio_processing_function(argc, argv, &echo_server);
+    audio_processing_function(argc, argv);
 
     // Ожидание завершения потока сервера
     server_thread.join();
