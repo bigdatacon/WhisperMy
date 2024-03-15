@@ -28,7 +28,10 @@ RUN chmod +x ./stream_server_docker
 # Исправлен путь запуска сервера, используя обновленное расположение исполняемого файла
 #CMD ["sh", "-c", "./stream_server_fin >  /dev/null"]
 #CMD ["sh", "-c", "./stream_server_fin > -vth 0.9 > /dev/null"]
-CMD ["./stream_server_docker", "-vth", "0.9"]
+#CMD ["./stream_server_docker", "-vth", "0.9"]
+#CMD ["./stream_server_docker", "-vth", "0.95", "-t", "4", "-fth", "150"]
+CMD ["./stream_server_docker", "-vth", "0.99", "-t", "4", "-fth", "150"]
+#CMD ["./stream_server_fin", "-vth", "0.9",  "-fth", "150"]
 
 
 
